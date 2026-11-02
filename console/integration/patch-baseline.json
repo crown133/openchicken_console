@@ -1,0 +1,9 @@
+{
+  "file": "openchicken_deploy/duck-control/src/safety.rs",
+  "sha256": "9f00233825613e16351383c8c36f409fd060485bbe280c08694c67a453e5d198",
+  "status": "applied with user approval; compile and tests pending Rust toolchain",
+  "purpose": "Expose successfully submitted bounded or hold targets without changing commands",
+  "applied_sha256": "4f064637c2bb3d3914797e9c665f80cc973771d182600a08125d1fdad1f2eb3d",
+  "production_diff_matches_approved": true,
+  "hardware_executed": false
+}

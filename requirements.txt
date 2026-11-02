@@ -1,0 +1,3 @@
+# Direct Python dependencies, versions verified in the current environment.
+aiohttp==3.11.18
+pyzmq==27.1.0

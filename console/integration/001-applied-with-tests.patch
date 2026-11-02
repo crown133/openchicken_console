@@ -1,0 +1,112 @@
+--- a/duck-control/src/safety.rs
++++ b/duck-control/src/safety.rs
+@@ -94,6 +94,8 @@
+ #[derive(Debug, Clone, Default, PartialEq)]
+ pub struct Applied {
+     pub limits: Vec<Limit>,
++    /// Values accepted by the IO write, not servo acknowledgement.
++    pub submitted: Option<[f64; NUM_JOINTS]>,
+ }
+ 
+ impl Applied {
+@@ -389,6 +391,7 @@
+             }
+             applied.limits.push(Limit::NotFinite);
+             self.io.write(&JointTargets::new(hold))?;
++            applied.submitted = Some(hold);
+             return Ok(applied);
+         }
+         self.runs.not_finite = 0;
+@@ -425,6 +428,7 @@
+         }
+ 
+         self.io.write(&JointTargets::new(safe))?;
++        applied.submitted = Some(safe);
+         Ok(applied)
+     }
+ 
+@@ -678,6 +682,7 @@
+         assert!(applied.limited_by(Limit::NotFinite));
+         assert!(!applied.limited_by(Limit::Range), "must not be clamped");
+         assert_eq!(s.io().last_written.unwrap().positions, DEFAULT_POSITION);
++        assert_eq!(applied.submitted, Some(s.io().last_written.unwrap().positions));
+     }
+ 
+     /// Out-of-range targets are clamped and reported. Reported matters: a client whose
+@@ -698,6 +703,7 @@
+         let written = s.io().last_written.unwrap().positions;
+         assert_eq!(written[2], ACTUATOR_MAX);
+         assert_eq!(written[7], ACTUATOR_MIN);
++        assert_eq!(applied.submitted, Some(written));
+     }
+ 
+     /// An ordinary tick must pass through untouched, or the clamp is silently mangling
+@@ -717,6 +723,68 @@
+         assert!(applied.limits.is_empty(), "{:?}", applied.limits);
+         assert_eq!(s.io().last_written.unwrap().positions, DEFAULT_POSITION);
+         assert_eq!(s.io().last_gain, Some(SafetyConfig::default().gain_running));
++        assert_eq!(applied.submitted, Some(s.io().last_written.unwrap().positions));
++    }
++
++    /// A failed tick must not turn the preceding tick's successful write into a new
++    /// submitted sample. Exercise both the ordinary and the non-finite hold path.
++    #[test]
++    fn a_failed_write_returns_no_applied_sample() {
++        struct FailWrite {
++            inner: FakeIo,
++            fail: bool,
++        }
++
++        impl RobotIo for FailWrite {
++            fn read(&mut self) -> Result<Sensors, IoError> {
++                self.inner.read()
++            }
++
++            fn write(&mut self, targets: &JointTargets) -> Result<(), IoError> {
++                if self.fail {
++                    Err(IoError::Simulated)
++                } else {
++                    self.inner.write(targets)
++                }
++            }
++
++            fn set_gain(&mut self, kp: u16) -> Result<(), IoError> {
++                self.inner.set_gain(kp)
++            }
++
++            fn set_torque(&mut self, on: bool) -> Result<(), IoError> {
++                self.inner.set_torque(on)
++            }
++
++            fn reboot(&mut self, id: u8) -> Result<(), IoError> {
++                self.inner.reboot(id)
++            }
++
++            fn slow_sensors(&mut self) -> Result<crate::io::SlowSensors, IoError> {
++                self.inner.slow_sensors()
++            }
++        }
++
++        let io = FailWrite {
++            inner: FakeIo::at(DEFAULT_POSITION),
++            fail: false,
++        };
++        let mut s = Safety::new(io, SafetyConfig::default());
++        let first = s.apply(DEFAULT_POSITION, DEFAULT_POSITION, gain()).unwrap();
++        assert_eq!(first.submitted, Some(DEFAULT_POSITION));
++
++        s.io.fail = true;
++        for targets in [[0.1; NUM_JOINTS], [f64::NAN; NUM_JOINTS]] {
++            let result = s.apply(targets, DEFAULT_POSITION, gain());
++            assert!(matches!(result, Err(IoError::Simulated)));
++            assert_eq!(s.io().inner.writes, 1);
++            assert_eq!(s.io().inner.last_written.unwrap().positions, DEFAULT_POSITION);
++        }
++
++        s.io.fail = false;
++        let next = s.apply([0.2; NUM_JOINTS], DEFAULT_POSITION, gain()).unwrap();
++        assert_eq!(next.submitted, Some([0.2; NUM_JOINTS]));
++        assert_eq!(s.io().inner.writes, 2);
+     }
+ 
+     /// The deadman zeroes the twist and nothing else. Losing comms should make the robot

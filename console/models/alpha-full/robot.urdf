@@ -1,0 +1,713 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="microduck_alpha_full">
+  <link name="world" />
+  <link name="body_0">
+    <visual name="visual_0_seeed_bearing__configuration__22x16x4">
+      <origin xyz="0.006 0.0175 -0.005" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_0">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+    <visual name="visual_1_trunk_shell_right">
+      <origin xyz="0.004 1.1005e-06 -0.0175576" rpy="0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/trunk_shell_right.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_1">
+        <color rgba="0.917647 0.917647 0.917647 1" />
+      </material>
+    </visual>
+    <visual name="visual_2_banana_pcb_locker">
+      <origin xyz="0.0042 -0 -0.0175215" rpy="-0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/banana_pcb_locker.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_2">
+        <color rgba="0.647059 0.647059 0.647059 1" />
+      </material>
+    </visual>
+    <visual name="visual_3_trunk_base">
+      <origin xyz="0.004 -0 -0.0175" rpy="0 0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/trunk_base.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_3">
+        <color rgba="0.34902 0.376471 0.4 1" />
+      </material>
+    </visual>
+    <visual name="visual_4_xl330">
+      <origin xyz="0.006 0.0175 0.0115" rpy="0 -1.570796327 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_4">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_5_power_support">
+      <origin xyz="0.004 -0 -0.0175215" rpy="-0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/power_support.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_5">
+        <color rgba="0.901961 0.901961 0.901961 1" />
+      </material>
+    </visual>
+    <visual name="visual_6_np_f970">
+      <origin xyz="-0.0359693 -0 -0.00385049" rpy="3.124139371 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/np_f970.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_6">
+        <color rgba="0.901961 0.901961 0.901961 1" />
+      </material>
+    </visual>
+    <visual name="visual_7_xl330">
+      <origin xyz="0.006 -0.0175 0.0115" rpy="0 -1.570796327 -3.141592654" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_7">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_8_trunk_shell_left">
+      <origin xyz="0.004 1.1005e-06 -0.0175576" rpy="0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/trunk_shell_left.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_8">
+        <color rgba="0.917647 0.917647 0.917647 1" />
+      </material>
+    </visual>
+    <visual name="visual_9_seeed_bearing__configuration__22x16x4">
+      <origin xyz="0.006 -0.0175 -0.005" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_9">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="fixed_0" type="fixed">
+    <parent link="world" />
+    <child link="body_0" />
+    <origin xyz="0 0 0.12" rpy="0 -0 0" />
+  </joint>
+  <link name="body_1">
+    <visual name="visual_10_yaw2roll">
+      <origin xyz="-0.0175 -0.002 0.0125" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/yaw2roll.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_10">
+        <color rgba="0.647059 0.647059 0.647059 1" />
+      </material>
+    </visual>
+    <visual name="visual_11_xl330">
+      <origin xyz="-0 0 0.0125" rpy="-3.141592654 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_11">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_12_seeed_bearing__configuration__22x16x4">
+      <origin xyz="-0 0.0165 0.0125" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_12">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+    <visual name="visual_13_bearing_roll">
+      <origin xyz="-0.0175 -0.002 0.0125" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/bearing_roll.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_13">
+        <color rgba="0.231373 0.380392 0.705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_hip_yaw" type="revolute">
+    <parent link="body_0" />
+    <child link="body_1" />
+    <origin xyz="0.006 0.0175 -0.005" rpy="3.141592654 -0 1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.4363323129985824" upper="0.5235987755982988" effort="1" velocity="1" />
+  </joint>
+  <link name="body_2">
+    <visual name="visual_14_seeed_bearing__configuration__22x16x4">
+      <origin xyz="0.021 0 -0.0185" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_14">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+    <visual name="visual_15_hip_l">
+      <origin xyz="-0.0175 0 -0.0185" rpy="-1.570796327 0 0" />
+      <geometry>
+        <mesh filename="meshes/hip_l.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_15">
+        <color rgba="0.901961 0.901961 0.901961 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_hip_roll" type="revolute">
+    <parent link="body_1" />
+    <child link="body_2" />
+    <origin xyz="-0 0.0165 0.0125" rpy="-1.570796327 -0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.3839724354387516" upper="0.38397243543875337" effort="1" velocity="1" />
+  </joint>
+  <link name="body_3">
+    <visual name="visual_16_left_upper_leg">
+      <origin xyz="0 -0 -0.0425" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/left_upper_leg.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_16">
+        <color rgba="0.866667 0.866667 0.866667 1" />
+      </material>
+    </visual>
+    <visual name="visual_17_xl330">
+      <origin xyz="0.022 0.0357771 0.0125" rpy="0 -1.570796327 -3.141592654" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_17">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_18_upper_leg_rigidity_plate">
+      <origin xyz="0 -0 -0.0425" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/upper_leg_rigidity_plate.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_18">
+        <color rgba="0.537255 0.854902 0.827451 1" />
+      </material>
+    </visual>
+    <visual name="visual_19_seeed_bearing__configuration__22x16x4">
+      <origin xyz="0.022 0.0357771 -0.004" rpy="0 0 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_19">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+    <visual name="visual_20_xl330">
+      <origin xyz="0 -0 0.0125" rpy="0 -1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_20">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_hip_pitch" type="revolute">
+    <parent link="body_2" />
+    <child link="body_3" />
+    <origin xyz="0.025 0 -0.0185" rpy="-1.570796327 -0 -1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949037" upper="1.5707963267948895" effort="1" velocity="1" />
+  </joint>
+  <link name="body_4">
+    <visual name="visual_21_leg">
+      <origin xyz="-0.022 0.0357771 0.0385" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/leg.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_21">
+        <color rgba="0.811765 0.858824 0.898039 1" />
+      </material>
+    </visual>
+    <visual name="visual_22_xl330">
+      <origin xyz="-0 0.042 -0.0115" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_22">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_knee" type="revolute">
+    <parent link="body_3" />
+    <child link="body_4" />
+    <origin xyz="0.022 0.0357771 -0.004" rpy="3.141592654 0 1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.570796326794901" upper="1.5707963267948921" effort="1" velocity="1" />
+  </joint>
+  <link name="body_5">
+    <visual name="visual_23_sole_left">
+      <origin xyz="-0.022 0.00622291 -0.0647" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/sole_left.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_23">
+        <color rgba="0.541176 0.682353 0.839216 1" />
+      </material>
+    </visual>
+    <visual name="visual_24_foot_left">
+      <origin xyz="-0.022 0.00622291 -0.0647" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/foot_left.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_24">
+        <color rgba="0.909804 0.572549 0.164706 1" />
+      </material>
+    </visual>
+    <visual name="visual_25_seeed_bearing__configuration_default">
+      <origin xyz="-0 0 -0.0322" rpy="0 -0 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration_default.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_25">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+    <visual name="visual_26_ankle_left">
+      <origin xyz="-0.022 0.00622291 -0.0647" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/ankle_left.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_26">
+        <color rgba="0.980392 0.713725 0.00392157 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_ankle" type="revolute">
+    <parent link="body_4" />
+    <child link="body_5" />
+    <origin xyz="-0 0.042 -0.026" rpy="3.141592654 0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949019" upper="1.5707963267948912" effort="1" velocity="1" />
+  </joint>
+  <link name="body_6">
+    <visual name="visual_27_neck">
+      <origin xyz="0.022 0.05 0.028" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/neck.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_27">
+        <color rgba="0.972549 0.529412 0.00392157 1" />
+      </material>
+    </visual>
+    <visual name="visual_28_xl330">
+      <origin xyz="0 0 0.0145" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_28">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_29_xl330">
+      <origin xyz="0 -0.05 0.0145" rpy="0 -1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_29">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_30_neck">
+      <origin xyz="0.022 0.05 0.003" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/neck.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_30">
+        <color rgba="0.972549 0.529412 0.00392157 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="neck_pitch" type="revolute">
+    <parent link="body_0" />
+    <child link="body_6" />
+    <origin xyz="0.026 0.0145011 0.0324424" rpy="-1.570796327 -0 3.141592654" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267948966" upper="1.0471975511965976" effort="1" velocity="1" />
+  </joint>
+  <link name="body_7">
+    <visual name="visual_31_neck_pitch">
+      <origin xyz="-0 0.0287931 -0.0145" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/neck_pitch.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_31">
+        <color rgba="0.34902 0.376471 0.4 1" />
+      </material>
+    </visual>
+    <visual name="visual_32_seeed_bearing__configuration__22x16x4">
+      <origin xyz="-0 0.0207931 -0.0145" rpy="1.570796327 -0 0" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_32">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="head_pitch" type="revolute">
+    <parent link="body_6" />
+    <child link="body_7" />
+    <origin xyz="0 -0.05 0" rpy="3.141592654 -0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267948966" upper="1.5707963267948966" effort="1" velocity="1" />
+  </joint>
+  <link name="body_8">
+    <visual name="visual_33_yaw_roll_motion">
+      <origin xyz="0 0 0.01" rpy="0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/yaw_roll_motion.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_33">
+        <color rgba="0.768627 0.886275 0.952941 1" />
+      </material>
+    </visual>
+    <visual name="visual_34_xl330">
+      <origin xyz="0 0 0.0145" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_34">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_35_seeed_bearing__configuration__22x16x4">
+      <origin xyz="-0.016 0 0.0145" rpy="0 -1.570796327 -0" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_35">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="head_yaw" type="revolute">
+    <parent link="body_7" />
+    <child link="body_8" />
+    <origin xyz="-0 0.0186931 -0.0145" rpy="1.570796327 -0 3.141592654" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.967059728390364" upper="2.967059728390357" effort="1" velocity="1" />
+  </joint>
+  <link name="body_9">
+    <visual name="visual_36_face_part">
+      <origin xyz="-0.0055 0 -0.018" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/face_part.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_36">
+        <color rgba="0.34902 0.376471 0.4 1" />
+      </material>
+    </visual>
+    <visual name="visual_37_xl330">
+      <origin xyz="0.00395858 0.0255 -0.018" rpy="0 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_37">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_38_jaw_soft">
+      <origin xyz="-0.00364142 0 -0.0179996" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/jaw_soft.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_38">
+        <color rgba="0.85098 0.756863 0.866667 1" />
+      </material>
+    </visual>
+    <visual name="visual_39_xl330">
+      <origin xyz="0 0 0.0145" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_39">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_40_elec_rpi_robot_hat_pcb">
+      <origin xyz="0.02319 0.029085 -0.0521" rpy="0 0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/elec_rpi_robot_hat_pcb.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_40">
+        <color rgba="0.313725 0.486275 0.411765 1" />
+      </material>
+    </visual>
+    <visual name="visual_41_soft_mouth_top">
+      <origin xyz="-0.00440118 1.81413e-07 -0.0181351" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/soft_mouth_top.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_41">
+        <color rgba="0.85098 0.756863 0.866667 1" />
+      </material>
+    </visual>
+    <visual name="visual_42_bottom_head_shell">
+      <origin xyz="-0.0045 0 -0.018" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/bottom_head_shell.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_42">
+        <color rgba="0.980392 0.713725 0.00392157 1" />
+      </material>
+    </visual>
+    <visual name="visual_43_motor_support">
+      <origin xyz="-0.0045 0 -0.018" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/motor_support.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_43">
+        <color rgba="0.498039 0.498039 0.498039 1" />
+      </material>
+    </visual>
+    <visual name="visual_44_pcb__raspberry_pi_zero_2_w">
+      <origin xyz="0.011685 8e-05 -0.06021" rpy="-1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/pcb__raspberry_pi_zero_2_w.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_44">
+        <color rgba="0.498039 0.498039 0.498039 1" />
+      </material>
+    </visual>
+    <visual name="visual_45_top_head_shell">
+      <origin xyz="-0.0045 -0 -0.018" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/top_head_shell.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_45">
+        <color rgba="0.901961 0.901961 0.901961 1" />
+      </material>
+    </visual>
+    <visual name="visual_46_jaw">
+      <origin xyz="-0.00354142 -0 -0.018" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/jaw.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_46">
+        <color rgba="0.980392 0.713725 0.00392157 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="head_roll" type="revolute">
+    <parent link="body_8" />
+    <child link="body_9" />
+    <origin xyz="-0.0179 0 0.0145" rpy="0 -1.570796327 -0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.4363323129986037" upper="0.43633231299856107" effort="1" velocity="1" />
+  </joint>
+  <link name="body_10">
+    <visual name="visual_47_yaw2roll">
+      <origin xyz="-0.0175 -0.002 0.0125" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/yaw2roll.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_47">
+        <color rgba="0.647059 0.647059 0.647059 1" />
+      </material>
+    </visual>
+    <visual name="visual_48_xl330">
+      <origin xyz="-0 0 0.0125" rpy="-3.141592654 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_48">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_49_bearing_roll">
+      <origin xyz="-0.0175 -0.002 0.0125" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/bearing_roll.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_49">
+        <color rgba="0.231373 0.380392 0.705882 1" />
+      </material>
+    </visual>
+    <visual name="visual_50_seeed_bearing__configuration__22x16x4">
+      <origin xyz="-0 0.0165 0.0125" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_50">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_hip_yaw" type="revolute">
+    <parent link="body_0" />
+    <child link="body_10" />
+    <origin xyz="0.006 -0.0175 -0.005" rpy="3.141592654 -0 1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.5235987755982988" upper="0.4363323129985824" effort="1" velocity="1" />
+  </joint>
+  <link name="body_11">
+    <visual name="visual_51_hip_l">
+      <origin xyz="-0.0175 0 -0.0185" rpy="-1.570796327 0 0" />
+      <geometry>
+        <mesh filename="meshes/hip_l.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_51">
+        <color rgba="0.901961 0.901961 0.901961 1" />
+      </material>
+    </visual>
+    <visual name="visual_52_seeed_bearing__configuration__22x16x4">
+      <origin xyz="0.025 0 -0.0185" rpy="1.570796327 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_52">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_hip_roll" type="revolute">
+    <parent link="body_10" />
+    <child link="body_11" />
+    <origin xyz="-0 0.0165 0.0125" rpy="1.570796327 0 3.141592654" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.3839724354387525" upper="0.3839724354387525" effort="1" velocity="1" />
+  </joint>
+  <link name="body_12">
+    <visual name="visual_53_xl330">
+      <origin xyz="-0.022 0.0357771 0.0125" rpy="0 -1.570796327 0" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_53">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_54_seeed_bearing__configuration__22x16x4">
+      <origin xyz="-0.022 0.0357771 0" rpy="3.141592654 -0 -0" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration__22x16x4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_54">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+    <visual name="visual_55_upper_leg_rigidity_plate">
+      <origin xyz="0 -0 0.0435" rpy="0 1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/upper_leg_rigidity_plate.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_55">
+        <color rgba="0.537255 0.854902 0.827451 1" />
+      </material>
+    </visual>
+    <visual name="visual_56_right_upper_leg">
+      <origin xyz="-0 -0 -0.0425" rpy="0 1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/right_upper_leg.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_56">
+        <color rgba="0.866667 0.866667 0.866667 1" />
+      </material>
+    </visual>
+    <visual name="visual_57_xl330">
+      <origin xyz="0 -0 0.0125" rpy="0 -1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_57">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_hip_pitch" type="revolute">
+    <parent link="body_11" />
+    <child link="body_12" />
+    <origin xyz="0.025 0 -0.0185" rpy="-1.570796327 -0 -1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949" upper="1.570796326794893" effort="1" velocity="1" />
+  </joint>
+  <link name="body_13">
+    <visual name="visual_58_xl330">
+      <origin xyz="-0.042 -0 -0.0115" rpy="0 -1.570796327 -0" />
+      <geometry>
+        <mesh filename="meshes/xl330.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_58">
+        <color rgba="0.286275 0.286275 0.286275 1" />
+      </material>
+    </visual>
+    <visual name="visual_59_leg">
+      <origin xyz="-0.0357771 -0.022 0.0385" rpy="0 1.570796327 -0" />
+      <geometry>
+        <mesh filename="meshes/leg.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_59">
+        <color rgba="0.811765 0.858824 0.898039 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_knee" type="revolute">
+    <parent link="body_12" />
+    <child link="body_13" />
+    <origin xyz="-0.022 0.0357771 -0.004" rpy="3.141592654 -0 -0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.570796326794901" upper="1.5707963267948921" effort="1" velocity="1" />
+  </joint>
+  <link name="body_14">
+    <visual name="visual_60_ankle_right">
+      <origin xyz="-0.022 -0.00622291 -0.0647" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/ankle_right.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_60">
+        <color rgba="0.980392 0.713725 0.00392157 1" />
+      </material>
+    </visual>
+    <visual name="visual_61_sole_right">
+      <origin xyz="-0.022 -0.00622291 -0.0647" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/sole_right.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_61">
+        <color rgba="0.541176 0.682353 0.839216 1" />
+      </material>
+    </visual>
+    <visual name="visual_62_seeed_bearing__configuration_default">
+      <origin xyz="0 -0 -0.0292" rpy="3.141592654 -0 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/seeed_bearing__configuration_default.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_62">
+        <color rgba="0.713725 0.760784 0.8 1" />
+      </material>
+    </visual>
+    <visual name="visual_63_foot_right">
+      <origin xyz="-0.022 -0.00622291 -0.0647" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/foot_right.stl" scale="1 1 1" />
+      </geometry>
+      <material name="visual_material_63">
+        <color rgba="0.909804 0.572549 0.164706 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_ankle" type="revolute">
+    <parent link="body_13" />
+    <child link="body_14" />
+    <origin xyz="-0.042 -0 -0.026" rpy="3.141592654 0 -1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949028" upper="1.5707963267948903" effort="1" velocity="1" />
+  </joint>
+</robot>

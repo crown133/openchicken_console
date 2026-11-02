@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "robot_id": "openchicken1",
+  "purpose": "readonly_orientation_monitor",
+  "sensors": {
+    "imu_raw": {
+      "sensor": "LSM6DSV16X",
+      "mounting": {
+        "x": "right",
+        "y": "forward",
+        "z": "up"
+      },
+      "mounting_status": "user_confirmed",
+      "gyro_bias_rad_s": [
+        -0.010758220023324687,
+        -0.00017234250194140795,
+        0.0031217912273372476
+      ],
+      "gyro_bias_status": "static_screen_passed",
+      "temperature_range_c": [
+        31.2109375,
+        31.3203125
+      ],
+      "bias_source": "static-02.jsonl",
+      "bias_source_sha256": "1ef586dadefed2c8f66be387b4043895381469daf1eb5669ce394a9f409c0750",
+      "level_reference_accel_m_s2": [
+        -0.08140633068264887,
+        -0.01139047431714579,
+        9.85744520496581
+      ],
+      "level_reference_status": "operator_upright_approximate",
+      "accelerometer_calibration": "factory_sensitivity_only",
+      "level_source": "static-01.jsonl",
+      "level_source_sha256": "b2cf75580447f6fe617bacc5787a9272ef234651d98c726e89bef92ed90ac67c"
+    },
+    "head_imu_raw": {
+      "sensor": "BMI088",
+      "mounting": {
+        "x": "backward",
+        "y": "right",
+        "z": "up"
+      },
+      "mounting_status": "user_confirmed",
+      "gyro_bias_rad_s": [
+        0.00011551060149741275,
+        0.00380329350856296,
+        -0.0022631521552641237
+      ],
+      "gyro_bias_status": "provisional_noise_flagged",
+      "temperature_range_c": [
+        27.5,
+        27.625
+      ],
+      "bias_source": "static-02.jsonl",
+      "bias_source_sha256": "1ef586dadefed2c8f66be387b4043895381469daf1eb5669ce394a9f409c0750",
+      "level_reference_accel_m_s2": null,
+      "level_reference_status": "not_set",
+      "accelerometer_calibration": "factory_sensitivity_only"
+    }
+  }
+}

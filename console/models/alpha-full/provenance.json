@@ -1,0 +1,115 @@
+{
+  "model_id": "alpha-full-65942920",
+  "source": "pollen-robotics/microduck_rl",
+  "source_commit": "659429207558d69a6270560e33725b84f26a954e",
+  "source_url": "https://github.com/pollen-robotics/microduck_rl/tree/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck",
+  "source_sha256": "1b818fe324809501bcb976eb718eba039938ae5442ed29ad7ce74d9a4c2d442c",
+  "meshes": 34,
+  "bodies": 15,
+  "parts": 64,
+  "instanced_triangles": 725006,
+  "quality": "original STL, no decimation",
+  "model_verified": false,
+  "joints": {
+    "left_hip_yaw": {
+      "link": "body_1",
+      "source_body": "yaw2roll",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_hip_roll": {
+      "link": "body_2",
+      "source_body": "hip_l",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_hip_pitch": {
+      "link": "body_3",
+      "source_body": "left_upper_leg",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_knee": {
+      "link": "body_4",
+      "source_body": "leg",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_ankle": {
+      "link": "body_5",
+      "source_body": "ankle_left",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "neck_pitch": {
+      "link": "body_6",
+      "source_body": "neck",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "head_pitch": {
+      "link": "body_7",
+      "source_body": "neck_pitch",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "head_yaw": {
+      "link": "body_8",
+      "source_body": "yaw_roll_motion",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "head_roll": {
+      "link": "body_9",
+      "source_body": "bottom_head_shell",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_hip_yaw": {
+      "link": "body_10",
+      "source_body": "bearing_roll",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_hip_roll": {
+      "link": "body_11",
+      "source_body": "hip_l_2",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_hip_pitch": {
+      "link": "body_12",
+      "source_body": "right_upper_leg",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_knee": {
+      "link": "body_13",
+      "source_body": "leg_2",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_ankle": {
+      "link": "body_14",
+      "source_body": "ankle_right",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    }
+  },
+  "note": "MJCF/URDF transforms verified separately. Physical servo direction and zero remain unverified. No homing offset reapplied.",
+  "license_note": "No LICENSE file found in the upstream repository tree at this commit; source attribution retained, no license inferred."
+}

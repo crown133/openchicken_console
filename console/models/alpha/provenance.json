@@ -1,0 +1,97 @@
+{
+  "source": "Existing local upstream assets; no new model download",
+  "source_commit": "942e58e3aa6dbb28e7037203fff11866122c7567",
+  "source_path": "/home/cyz/openchicken/openchicken_deploy/robotctl/assets/duck.bin",
+  "source_sha256": "40a6ef7ac0d060ef134d536988021c7852d63ba33f613b9e3c1ff215ccab1f41",
+  "meshes": 29,
+  "bodies": 15,
+  "parts": 59,
+  "model_verified": false,
+  "joints": {
+    "left_hip_yaw": {
+      "link": "body_1",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_hip_roll": {
+      "link": "body_2",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_hip_pitch": {
+      "link": "body_3",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_knee": {
+      "link": "body_4",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "left_ankle": {
+      "link": "body_5",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "neck_pitch": {
+      "link": "body_6",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "head_pitch": {
+      "link": "body_7",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "head_yaw": {
+      "link": "body_8",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "head_roll": {
+      "link": "body_9",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_hip_yaw": {
+      "link": "body_10",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_hip_roll": {
+      "link": "body_11",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_hip_pitch": {
+      "link": "body_12",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_knee": {
+      "link": "body_13",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    },
+    "right_ankle": {
+      "link": "body_14",
+      "direction": 1,
+      "model_offset": 0,
+      "verified": false
+    }
+  },
+  "note": "Simplified official visual model. Physical ID mapping, axis and zero require verification. Homing Offset is not reapplied."
+}

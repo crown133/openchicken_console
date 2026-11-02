@@ -1,0 +1,27 @@
+--- a/duck-control/src/safety.rs
++++ b/duck-control/src/safety.rs
+@@ -94,6 +94,8 @@
+ #[derive(Debug, Clone, Default, PartialEq)]
+ pub struct Applied {
+     pub limits: Vec<Limit>,
++    /// Values accepted by the IO write, not servo acknowledgement.
++    pub submitted: Option<[f64; NUM_JOINTS]>,
+ }
+ 
+ impl Applied {
+@@ -389,6 +391,7 @@
+             }
+             applied.limits.push(Limit::NotFinite);
+             self.io.write(&JointTargets::new(hold))?;
++            applied.submitted = Some(hold);
+             return Ok(applied);
+         }
+         self.runs.not_finite = 0;
+@@ -425,6 +428,7 @@
+         }
+ 
+         self.io.write(&JointTargets::new(safe))?;
++        applied.submitted = Some(safe);
+         Ok(applied)
+     }
+ 

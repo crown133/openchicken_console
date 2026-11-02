@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+artifacts/
+exports/
+console/config/
+console/tests/tmp*/
+*.log
+*.pem
+*.key
+*.private.json

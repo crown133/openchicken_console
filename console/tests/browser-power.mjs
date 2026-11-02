@@ -1,0 +1,32 @@
+import {createRequire} from 'node:module';
+import {spawn} from 'node:child_process';
+import {mkdir,writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const require=createRequire(import.meta.url);
+const {chromium}=require('/home/cyz/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const root=new URL('../',import.meta.url).pathname;
+const out='/home/cyz/openchicken/artifacts/console-power-review-20261029/browser/';await mkdir(out,{recursive:true});
+process.env.TMPDIR='/home/cyz/openchicken/artifacts/t3-browser-tmp';
+const fixture=spawn('/home/cyz/miniconda3/envs/LocoMujoco/bin/python',['-B','-u','tests/power_fixture.py'],{cwd:root,stdio:['pipe','pipe','pipe']});
+let log='',browser;fixture.stdout.on('data',b=>log+=b);fixture.stderr.on('data',b=>log+=b);
+try{
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error(log)),10000);fixture.stdout.on('data',()=>{if(log.includes('FIXTURE_READY')){clearTimeout(timer);resolve();}});fixture.on('exit',c=>{clearTimeout(timer);reject(new Error(log));});});
+ browser=await chromium.launch({headless:true,executablePath:'/usr/bin/google-chrome',args:['--no-sandbox','--disable-webgl']});
+ const page=await browser.newPage({viewport:{width:1500,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:18089/');
+ const power=async text=>page.locator('#metrics').filter({hasText:`外部电源存在：${text}`}).waitFor({timeout:5000});
+ await power('已接入');assert.equal(await page.locator('#machine-source').textContent(),'REAL');assert.match(await page.locator('#metrics').textContent(),/14\/14 有效/);
+ for(const id of ['start','claim','enable','stop'])assert.equal(await page.locator('#'+id).isDisabled(),true);
+ fixture.stdin.write('power0\n');await power('未接入');
+ fixture.stdin.write('power_fail\n');await power('未知');assert.match(await page.locator('#metrics').textContent(),/14\/14 有效/);assert.match(await page.locator('#head-imu-status').textContent(),/六轴/);
+ await page.screenshot({path:out+'gpio-failed.png',fullPage:true});
+ fixture.stdin.write('power1\n');await power('已接入');
+ await page.locator('.review-tools summary').click();await page.locator('#freeze').click();fixture.stdin.write('power0\n');await page.waitForTimeout(500);await power('已接入');await page.locator('#freeze').click();await power('未接入');
+ await page.locator('#record').click();await page.waitForTimeout(600);await page.locator('#record').click();await page.locator('#history').click();await page.locator('#recordings button').first().click();
+ await page.locator('#mode-banner').filter({hasText:'历史回放'}).waitFor();await power('未接入');assert.equal(await page.locator('#start').isDisabled(),true);await page.reload();await power('未接入');
+ fixture.stdin.write('stop\n');await page.locator('#machine-state').filter({hasText:'离线'}).waitFor({timeout:8000});assert.match(await page.locator('#metrics').textContent(),/未知/);assert.doesNotMatch(await page.locator('#metrics').textContent(),/外部电源存在：(?:已接入|未接入)/);
+ fixture.stdin.write('restart\n');await power('未接入');
+ await page.screenshot({path:out+'live.png',fullPage:true});
+ await page.goto('http://127.0.0.1:18089/en/');await page.locator('#metrics').filter({hasText:'External power present'}).waitFor();assert.deepEqual(errors,[]);
+ await writeFile(out+'results.json',JSON.stringify({passed:true,scope:'Fake GPIO/IMU/DXL through authenticated power protocol, not robot evidence; WebGL disabled',checks:['high/low/unknown/recovery','GPIO failure independent of DXL and IMUs','REAL tag and disabled controls','freeze','record/replay source and power','offline unknown','restart','English','no JS errors']},null,2)+'\n');console.log('Power browser fixture passed');
+}finally{if(browser)await browser.close();fixture.stdin.end('quit\n');await new Promise(r=>fixture.exitCode!==null?r():fixture.once('exit',r));await writeFile(out+'fixture.log',log);}

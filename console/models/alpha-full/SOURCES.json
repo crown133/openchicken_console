@@ -1,0 +1,316 @@
+[
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/robot_walk.xml",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/robot_walk.xml",
+    "size": 30533,
+    "sha256": "1b818fe324809501bcb976eb718eba039938ae5442ed29ad7ce74d9a4c2d442c",
+    "type": "MJCF XML model data",
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/ankle_left.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/ankle_left.stl",
+    "size": 245884,
+    "sha256": "0803b4869190fcabfbc8d48088597fc3305cabe3f755e0e5e40c986162b937ba",
+    "type": "binary STL mesh data",
+    "triangles": 4916,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/ankle_right.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/ankle_right.stl",
+    "size": 245884,
+    "sha256": "5813a1f4f989b32b9dfc2f3028b27ca0fe61f060e45e952cd6be701d013180c9",
+    "type": "binary STL mesh data",
+    "triangles": 4916,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/banana_pcb_locker.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/banana_pcb_locker.stl",
+    "size": 69484,
+    "sha256": "a176364f824248b5156b37f2fd5c6b8bdfb24cd08be7ed6b3faa10b4db14a9cb",
+    "type": "binary STL mesh data",
+    "triangles": 1388,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/bearing_roll.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/bearing_roll.stl",
+    "size": 121084,
+    "sha256": "2b30cbdb110c5cca7092a9b2658c9e899e294bf2df71635828858e1d1a20abfe",
+    "type": "binary STL mesh data",
+    "triangles": 2420,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/bottom_head_shell.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/bottom_head_shell.stl",
+    "size": 1048584,
+    "sha256": "067c4c9add3885e78f17a57b01762c9033b47e357d00f1fa9751846f26c4858d",
+    "type": "binary STL mesh data",
+    "triangles": 20970,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/elec_rpi_robot_hat_pcb.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/elec_rpi_robot_hat_pcb.stl",
+    "size": 942884,
+    "sha256": "45b904bcb378161d274d313cd067d3967305db0bf22c0955530145e18cdd2cd8",
+    "type": "binary STL mesh data",
+    "triangles": 18856,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/face_part.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/face_part.stl",
+    "size": 518084,
+    "sha256": "14635ddaafa989595403f764626c769dcabf35893580daea80976051a2b830bd",
+    "type": "binary STL mesh data",
+    "triangles": 10360,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/foot_left.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/foot_left.stl",
+    "size": 1048484,
+    "sha256": "9d19c130b451071022d78bde4dae78df92b11c4afe7d4d3be6e90efdf6595baf",
+    "type": "binary STL mesh data",
+    "triangles": 20968,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/foot_right.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/foot_right.stl",
+    "size": 853884,
+    "sha256": "005bae681d899a59fc9aea9b8d5eac396a73247ead3787868a87354eb01d1a7c",
+    "type": "binary STL mesh data",
+    "triangles": 17076,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/hip_l.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/hip_l.stl",
+    "size": 1048584,
+    "sha256": "6dbf89f7e8f84592bcabb2f21af15ae742c009dd2be440c65b70716975ad9bb6",
+    "type": "binary STL mesh data",
+    "triangles": 20970,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/jaw.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/jaw.stl",
+    "size": 463484,
+    "sha256": "1ce44a00cb39c733446980e25d4dd9d61f1ae4a5fda125dc308e8dfe7aca221c",
+    "type": "binary STL mesh data",
+    "triangles": 9268,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/jaw_soft.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/jaw_soft.stl",
+    "size": 336384,
+    "sha256": "61a426890f748713d45a9c0844149bcb0340d326f75295dcf7de2a4d768cbc85",
+    "type": "binary STL mesh data",
+    "triangles": 6726,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/left_upper_leg.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/left_upper_leg.stl",
+    "size": 612584,
+    "sha256": "b84e46d681cb971029e421c252de85e2f31e8858abee610dc26cd18037ef0224",
+    "type": "binary STL mesh data",
+    "triangles": 12250,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/leg.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/leg.stl",
+    "size": 738884,
+    "sha256": "07f5b135919f8fbf472bc299fa7f38d3c9877fa202345db92f3b207c6603b91c",
+    "type": "binary STL mesh data",
+    "triangles": 14776,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/motor_support.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/motor_support.stl",
+    "size": 217184,
+    "sha256": "3fceefe5f30de3d0891859d2c86ec63391f69b3d8bbfae506f30a17a94ee8d6c",
+    "type": "binary STL mesh data",
+    "triangles": 4342,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/neck.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/neck.stl",
+    "size": 73484,
+    "sha256": "ee5d4cbc51f64c43cd9c15f82709be93b5bd3f080013726d1d39c329c85050b9",
+    "type": "binary STL mesh data",
+    "triangles": 1468,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/neck_pitch.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/neck_pitch.stl",
+    "size": 356084,
+    "sha256": "b9aed695e03da3819d244ecc66f1ad2d3c5c435f759403bb9e0f3b9ca2876453",
+    "type": "binary STL mesh data",
+    "triangles": 7120,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/np_f970.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/np_f970.stl",
+    "size": 1048584,
+    "sha256": "979ca81251d4ec5862b6c987b46095aa07d0534ca1ec15f3cf438bbf7189deda",
+    "type": "binary STL mesh data",
+    "triangles": 20970,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/pcb__raspberry_pi_zero_2_w.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/pcb__raspberry_pi_zero_2_w.stl",
+    "size": 1048584,
+    "sha256": "0608b3cc7d15e479ae3a275c03096df44322ed06a8dbfc59fe790c46b3690753",
+    "type": "binary STL mesh data",
+    "triangles": 20970,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/power_support.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/power_support.stl",
+    "size": 397684,
+    "sha256": "b03325ca6f00d546b49ce5dd2a429759d4da8c0f05e28aa20201556ee21e5237",
+    "type": "binary STL mesh data",
+    "triangles": 7952,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/right_upper_leg.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/right_upper_leg.stl",
+    "size": 612584,
+    "sha256": "208f4c94a94a9c6b978030ea194440a94a0508390cf5b0ce8efc5e560f559f21",
+    "type": "binary STL mesh data",
+    "triangles": 12250,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/seeed_bearing__configuration__22x16x4.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/seeed_bearing__configuration__22x16x4.stl",
+    "size": 1048584,
+    "sha256": "154412afeab1875acfc8bbd437f193f02c86cdd6a556395db10bb7126c545c6e",
+    "type": "binary STL mesh data",
+    "triangles": 20970,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/seeed_bearing__configuration_default.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/seeed_bearing__configuration_default.stl",
+    "size": 1048584,
+    "sha256": "4d0d4c174a167e5f783b52b212a14a5bbd8a3180988c744c299c330a6b3de448",
+    "type": "binary STL mesh data",
+    "triangles": 20970,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/soft_mouth_top.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/soft_mouth_top.stl",
+    "size": 393584,
+    "sha256": "16f662c82bd3e24f0e64ee22b6b549b9a2a76f6de7b7477b9f89f5861f3e91a1",
+    "type": "binary STL mesh data",
+    "triangles": 7870,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/sole_left.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/sole_left.stl",
+    "size": 1048484,
+    "sha256": "190d1f49f215b2ed6c1f2681d52e3070636b726f9996b745b985f568e1f73298",
+    "type": "binary STL mesh data",
+    "triangles": 20968,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/sole_right.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/sole_right.stl",
+    "size": 1048484,
+    "sha256": "aa90df896d6c39713ec5bd2b56625e651435fb4608461d757b4af750f0728a28",
+    "type": "binary STL mesh data",
+    "triangles": 20968,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/top_head_shell.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/top_head_shell.stl",
+    "size": 723484,
+    "sha256": "0e8dd69d02291c99f5af4b7033706f40eb60b1e34c91e10e00faf28093f7d51c",
+    "type": "binary STL mesh data",
+    "triangles": 14468,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/trunk_base.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/trunk_base.stl",
+    "size": 184984,
+    "sha256": "fabfecefb73fbdc027e0fc8fc482a3857b86682a8dac0ca2ed88ae3011c01659",
+    "type": "binary STL mesh data",
+    "triangles": 3698,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/trunk_shell_left.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/trunk_shell_left.stl",
+    "size": 708384,
+    "sha256": "508bf1436c09bb5acb27568b157477f74ccd985f5cb0911a0d0e25d178882772",
+    "type": "binary STL mesh data",
+    "triangles": 14166,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/trunk_shell_right.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/trunk_shell_right.stl",
+    "size": 567984,
+    "sha256": "d5761d6995bfc175ddf429bab8ee2fab2fa9dea1ff52da30531a3b79be1c730e",
+    "type": "binary STL mesh data",
+    "triangles": 11358,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/upper_leg_rigidity_plate.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/upper_leg_rigidity_plate.stl",
+    "size": 180084,
+    "sha256": "41a4f826b5badfb75a1c0a6d26527c49761de88597d67c25ad731df2cdab7995",
+    "type": "binary STL mesh data",
+    "triangles": 3600,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/xl330.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/xl330.stl",
+    "size": 206384,
+    "sha256": "c9f6bf7dd9d8b307a4174b40ff12517b3ea470e5535319a5b7dcce4ba52cdfe1",
+    "type": "binary STL mesh data",
+    "triangles": 4126,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/yaw2roll.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/yaw2roll.stl",
+    "size": 620284,
+    "sha256": "7a0abf1b9d5a75868d7776fba3e28abeeee4aa3086e9559c073554c3a618a464",
+    "type": "binary STL mesh data",
+    "triangles": 12404,
+    "executable": false
+  },
+  {
+    "source_url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/659429207558d69a6270560e33725b84f26a954e/src/mjlab_microduck/robot/microduck/assets/yaw_roll_motion.stl",
+    "destination": "third_party/_staging/microduck-visual-65942920-20261028/assets/yaw_roll_motion.stl",
+    "size": 270384,
+    "sha256": "5fb390116f5347f8a74ab8cfc7a02cdbed9df0ec8c86488984bd378a6d3b5647",
+    "type": "binary STL mesh data",
+    "triangles": 5406,
+    "executable": false
+  }
+]

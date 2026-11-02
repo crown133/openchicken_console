@@ -1,0 +1,668 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="microduck_alpha_simplified">
+  <link name="world" />
+  <link name="body_0">
+    <visual>
+      <origin xyz="0.006000000052 0.01750000007 -0.004999999888" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_0_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.00400000019 1.100499958e-06 -0.01755760051" rpy="0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/1.stl" />
+      </geometry>
+      <material name="part_0_1">
+        <color rgba="0.9176470588 0.9176470588 0.9176470588 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.00400000019 -0 -0.01750000007" rpy="0 0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/2.stl" />
+      </geometry>
+      <material name="part_0_2">
+        <color rgba="0.3490196078 0.3764705882 0.4 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.006000000052 0.01750000007 0.01150000002" rpy="0 -1.570796327 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_0_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.03596929833 -0 -0.003850490088" rpy="3.124139372 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/4.stl" />
+      </geometry>
+      <material name="part_0_4">
+        <color rgba="0.1607843137 0.1607843137 0.1803921569 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.006000000052 -0.01750000007 0.01150000002" rpy="0 -1.570796327 -3.141592654" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_0_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.00400000019 1.100499958e-06 -0.01755760051" rpy="0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/5.stl" />
+      </geometry>
+      <material name="part_0_5">
+        <color rgba="0.9176470588 0.9176470588 0.9176470588 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.006000000052 -0.01750000007 -0.004999999888" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_0_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="fixed_0" type="fixed">
+    <parent link="world" />
+    <child link="body_0" />
+    <origin xyz="0 0 0.1199999973" rpy="0 -0 0" />
+  </joint>
+  <link name="body_1">
+    <visual>
+      <origin xyz="-0.01750000007 -0.002000000095 0.01250000019" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/6.stl" />
+      </geometry>
+      <material name="part_1_6">
+        <color rgba="0.6470588235 0.6470588235 0.6470588235 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 0 0.01250000019" rpy="-3.141592654 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_1_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 0.01649999991 0.01250000019" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_1_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.01750000007 -0.002000000095 0.01250000019" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/7.stl" />
+      </geometry>
+      <material name="part_1_7">
+        <color rgba="0.231372549 0.3803921569 0.7058823529 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_hip_yaw" type="revolute">
+    <parent link="body_0" />
+    <child link="body_1" />
+    <origin xyz="0.006000000052 0.01750000007 -0.004999999888" rpy="3.141592654 -0 1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.4363323129985824" upper="0.5235987755982988" effort="1" velocity="1" />
+  </joint>
+  <link name="body_2">
+    <visual>
+      <origin xyz="0.02099999972 0 -0.01850000024" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_2_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.01750000007 0 -0.01850000024" rpy="-1.570796327 0 0" />
+      <geometry>
+        <mesh filename="meshes/8.stl" />
+      </geometry>
+      <material name="part_2_8">
+        <color rgba="0.9019607843 0.9019607843 0.9019607843 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_hip_roll" type="revolute">
+    <parent link="body_1" />
+    <child link="body_2" />
+    <origin xyz="-0 0.01649999991 0.01250000019" rpy="-1.570796327 -0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.3839724354387516" upper="0.38397243543875337" effort="1" velocity="1" />
+  </joint>
+  <link name="body_3">
+    <visual>
+      <origin xyz="0 -0 -0.04250000045" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/9.stl" />
+      </geometry>
+      <material name="part_3_9">
+        <color rgba="0.8666666667 0.8666666667 0.8666666667 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.02199999988 0.03577709943 0.01250000019" rpy="0 -1.570796327 -3.141592654" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_3_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 -0 -0.04250000045" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/10.stl" />
+      </geometry>
+      <material name="part_3_10">
+        <color rgba="0.537254902 0.8549019608 0.8274509804 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.02199999988 0.03577709943 -0.00400000019" rpy="0 0 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_3_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 -0 0.01250000019" rpy="0 -1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_3_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_hip_pitch" type="revolute">
+    <parent link="body_2" />
+    <child link="body_3" />
+    <origin xyz="0.02500000037 0 -0.01850000024" rpy="-1.570796327 -0 -1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949037" upper="1.5707963267948895" effort="1" velocity="1" />
+  </joint>
+  <link name="body_4">
+    <visual>
+      <origin xyz="-0.02199999988 0.03577709943 0.03849999979" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/11.stl" />
+      </geometry>
+      <material name="part_4_11">
+        <color rgba="0.8117647059 0.8588235294 0.8980392157 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 0.04199999943 -0.01150000002" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_4_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_knee" type="revolute">
+    <parent link="body_3" />
+    <child link="body_4" />
+    <origin xyz="0.02199999988 0.03577709943 -0.00400000019" rpy="3.141592654 0 1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.570796326794901" upper="1.5707963267948921" effort="1" velocity="1" />
+  </joint>
+  <link name="body_5">
+    <visual>
+      <origin xyz="-0.02199999988 0.006222909782 -0.06469999999" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/12.stl" />
+      </geometry>
+      <material name="part_5_12">
+        <color rgba="0.5411764706 0.6823529412 0.8392156863 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.02199999988 0.006222909782 -0.06469999999" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/13.stl" />
+      </geometry>
+      <material name="part_5_13">
+        <color rgba="0.9098039216 0.5725490196 0.1647058824 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 0 -0.03220000118" rpy="0 -0 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/14.stl" />
+      </geometry>
+      <material name="part_5_14">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.02199999988 0.006222909782 -0.06469999999" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/15.stl" />
+      </geometry>
+      <material name="part_5_15">
+        <color rgba="0.9803921569 0.7137254902 0.003921568627 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="left_ankle" type="revolute">
+    <parent link="body_4" />
+    <child link="body_5" />
+    <origin xyz="-0 0.04199999943 -0.02600000054" rpy="3.141592654 0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949019" upper="1.5707963267948912" effort="1" velocity="1" />
+  </joint>
+  <link name="body_6">
+    <visual>
+      <origin xyz="0.02199999988 0.05000000075 0.02800000086" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/16.stl" />
+      </geometry>
+      <material name="part_6_16">
+        <color rgba="0.9725490196 0.5294117647 0.003921568627 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.01449999958" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_6_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 -0.05000000075 0.01449999958" rpy="0 -1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_6_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.02199999988 0.05000000075 0.003000000026" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/16.stl" />
+      </geometry>
+      <material name="part_6_16">
+        <color rgba="0.9725490196 0.5294117647 0.003921568627 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="neck_pitch" type="revolute">
+    <parent link="body_0" />
+    <child link="body_6" />
+    <origin xyz="0.02600000054 0.01450110041 0.03244239837" rpy="-1.570796327 -0 3.141592654" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267948966" upper="1.0471975511965976" effort="1" velocity="1" />
+  </joint>
+  <link name="body_7">
+    <visual>
+      <origin xyz="-0 0.02879310027 -0.01449999958" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/17.stl" />
+      </geometry>
+      <material name="part_7_17">
+        <color rgba="0.3490196078 0.3764705882 0.4 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 0.02079310082 -0.01449999958" rpy="1.570796327 -0 0" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_7_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="head_pitch" type="revolute">
+    <parent link="body_6" />
+    <child link="body_7" />
+    <origin xyz="0 -0.05000000075 0" rpy="3.141592654 -0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267948966" upper="1.5707963267948966" effort="1" velocity="1" />
+  </joint>
+  <link name="body_8">
+    <visual>
+      <origin xyz="0 0 0.009999999776" rpy="0 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/18.stl" />
+      </geometry>
+      <material name="part_8_18">
+        <color rgba="0.768627451 0.8862745098 0.9529411765 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.01449999958" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_8_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.01600000076 0 0.01449999958" rpy="0 -1.570796327 -0" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_8_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="head_yaw" type="revolute">
+    <parent link="body_7" />
+    <child link="body_8" />
+    <origin xyz="-0 0.01869310066 -0.01449999958" rpy="1.570796327 -0 3.141592654" />
+    <axis xyz="0 0 1" />
+    <limit lower="-2.967059728390364" upper="2.967059728390357" effort="1" velocity="1" />
+  </joint>
+  <link name="body_9">
+    <visual>
+      <origin xyz="-0.00549999997 0 -0.01799999923" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/19.stl" />
+      </geometry>
+      <material name="part_9_19">
+        <color rgba="0.3490196078 0.3764705882 0.4 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.003958580084 0.02549999952 -0.01799999923" rpy="0 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_9_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.003641420044 0 -0.01799960062" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/20.stl" />
+      </geometry>
+      <material name="part_9_20">
+        <color rgba="0.8509803922 0.7568627451 0.8666666667 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.01449999958" rpy="0 -1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_9_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.004401179962 1.814130002e-07 -0.0181351006" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/21.stl" />
+      </geometry>
+      <material name="part_9_21">
+        <color rgba="0.8509803922 0.7568627451 0.8666666667 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.004499999806 0 -0.01799999923" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/22.stl" />
+      </geometry>
+      <material name="part_9_22">
+        <color rgba="0.9803921569 0.7137254902 0.003921568627 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.004499999806 -0 -0.01799999923" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/23.stl" />
+      </geometry>
+      <material name="part_9_23">
+        <color rgba="0.9019607843 0.9019607843 0.9019607843 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.003541419981 -0 -0.01799999923" rpy="1.570796327 -0 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/24.stl" />
+      </geometry>
+      <material name="part_9_24">
+        <color rgba="0.9803921569 0.7137254902 0.003921568627 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="head_roll" type="revolute">
+    <parent link="body_8" />
+    <child link="body_9" />
+    <origin xyz="-0.0178999994 0 0.01449999958" rpy="0 -1.570796327 -0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.4363323129986037" upper="0.43633231299856107" effort="1" velocity="1" />
+  </joint>
+  <link name="body_10">
+    <visual>
+      <origin xyz="-0.01750000007 -0.002000000095 0.01250000019" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/6.stl" />
+      </geometry>
+      <material name="part_10_6">
+        <color rgba="0.6470588235 0.6470588235 0.6470588235 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 0 0.01250000019" rpy="-3.141592654 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_10_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.01750000007 -0.002000000095 0.01250000019" rpy="3.141592654 -0 0" />
+      <geometry>
+        <mesh filename="meshes/7.stl" />
+      </geometry>
+      <material name="part_10_7">
+        <color rgba="0.231372549 0.3803921569 0.7058823529 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 0.01649999991 0.01250000019" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_10_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_hip_yaw" type="revolute">
+    <parent link="body_0" />
+    <child link="body_10" />
+    <origin xyz="0.006000000052 -0.01750000007 -0.004999999888" rpy="3.141592654 -0 1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.5235987755982988" upper="0.4363323129985824" effort="1" velocity="1" />
+  </joint>
+  <link name="body_11">
+    <visual>
+      <origin xyz="-0.01750000007 0 -0.01850000024" rpy="-1.570796327 0 0" />
+      <geometry>
+        <mesh filename="meshes/8.stl" />
+      </geometry>
+      <material name="part_11_8">
+        <color rgba="0.9019607843 0.9019607843 0.9019607843 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.02500000037 0 -0.01850000024" rpy="1.570796327 -0 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_11_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_hip_roll" type="revolute">
+    <parent link="body_10" />
+    <child link="body_11" />
+    <origin xyz="-0 0.01649999991 0.01250000019" rpy="1.570796327 0 3.141592654" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.3839724354387525" upper="0.3839724354387525" effort="1" velocity="1" />
+  </joint>
+  <link name="body_12">
+    <visual>
+      <origin xyz="-0.02199999988 0.03577709943 0.01250000019" rpy="0 -1.570796327 0" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_12_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.02199999988 0.03577709943 0" rpy="3.141592654 -0 -0" />
+      <geometry>
+        <mesh filename="meshes/0.stl" />
+      </geometry>
+      <material name="part_12_0">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 -0 0.04349999875" rpy="0 1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/10.stl" />
+      </geometry>
+      <material name="part_12_10">
+        <color rgba="0.537254902 0.8549019608 0.8274509804 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0 -0 -0.04250000045" rpy="0 1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/25.stl" />
+      </geometry>
+      <material name="part_12_25">
+        <color rgba="0.8666666667 0.8666666667 0.8666666667 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 -0 0.01250000019" rpy="0 -1.570796327 1.570796327" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_12_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_hip_pitch" type="revolute">
+    <parent link="body_11" />
+    <child link="body_12" />
+    <origin xyz="0.02500000037 0 -0.01850000024" rpy="-1.570796327 -0 -1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949" upper="1.570796326794893" effort="1" velocity="1" />
+  </joint>
+  <link name="body_13">
+    <visual>
+      <origin xyz="-0.04199999943 -0 -0.01150000002" rpy="0 -1.570796327 -0" />
+      <geometry>
+        <mesh filename="meshes/3.stl" />
+      </geometry>
+      <material name="part_13_3">
+        <color rgba="0.2862745098 0.2862745098 0.2862745098 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.03577709943 -0.02199999988 0.03849999979" rpy="0 1.570796327 -0" />
+      <geometry>
+        <mesh filename="meshes/11.stl" />
+      </geometry>
+      <material name="part_13_11">
+        <color rgba="0.8117647059 0.8588235294 0.8980392157 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_knee" type="revolute">
+    <parent link="body_12" />
+    <child link="body_13" />
+    <origin xyz="-0.02199999988 0.03577709943 -0.00400000019" rpy="3.141592654 -0 -0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.570796326794901" upper="1.5707963267948921" effort="1" velocity="1" />
+  </joint>
+  <link name="body_14">
+    <visual>
+      <origin xyz="-0.02199999988 -0.006222909782 -0.06469999999" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/26.stl" />
+      </geometry>
+      <material name="part_14_26">
+        <color rgba="0.9803921569 0.7137254902 0.003921568627 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.02199999988 -0.006222909782 -0.06469999999" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/27.stl" />
+      </geometry>
+      <material name="part_14_27">
+        <color rgba="0.5411764706 0.6823529412 0.8392156863 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 -0 -0.02920000069" rpy="3.141592654 -0 3.141592654" />
+      <geometry>
+        <mesh filename="meshes/14.stl" />
+      </geometry>
+      <material name="part_14_14">
+        <color rgba="0.7137254902 0.7607843137 0.8 1" />
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.02199999988 -0.006222909782 -0.06469999999" rpy="0 1.570796327 -1.570796327" />
+      <geometry>
+        <mesh filename="meshes/28.stl" />
+      </geometry>
+      <material name="part_14_28">
+        <color rgba="0.9098039216 0.5725490196 0.1647058824 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="right_ankle" type="revolute">
+    <parent link="body_13" />
+    <child link="body_14" />
+    <origin xyz="-0.04199999943 -0 -0.02600000054" rpy="3.141592654 0 -1.570796327" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.5707963267949028" upper="1.5707963267948903" effort="1" velocity="1" />
+  </joint>
+</robot>

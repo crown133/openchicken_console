@@ -1,0 +1,8 @@
+{
+  "file": "openchicken-front.png",
+  "kind": "AI-generated front-view UI illustration",
+  "generator": "built-in image_gen",
+  "approved_for_integration": "User approved the concept and requested updating the console in this style on 2026-10-28.",
+  "sha256": "d4069e1979a538800640aea901f2762cd391aeaa17538064ce9d72413788939d",
+  "notes": "Transparent base illustration only. Joint values and status colors are rendered separately from telemetry. Screen-space anchors are illustrative, not calibrated mechanical coordinates. URDF geometry and materials are unchanged."
+}

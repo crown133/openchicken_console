@@ -1,0 +1,16 @@
+{
+  "backend_tests": {
+    "total": 100,
+    "initial_passed": 99,
+    "initial_errors": 1,
+    "focused_recheck_passed": 1,
+    "command": "PYTHONPATH=console python -m unittest discover -s console/tests -v",
+    "python_environment": "Python 3.10 / aiohttp 3.11.18 / pyzmq 27.1.0",
+    "notes": "Local test sockets and fake hardware only; Initial attempts exposed long Unix socket paths and missing PYTHONPATH; documented invocation at short path used."
+  },
+  "unchanged_source_files": 196,
+  "credentials": "config directory excluded; known stored private values not present",
+  "real_robot_commands_sent": 0,
+  "running_services_restarted": false,
+  "browser_tests_rerun_for_export": false
+}

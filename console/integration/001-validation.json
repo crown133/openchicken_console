@@ -1,0 +1,11 @@
+{
+  "scope": "Approved submitted observation patch and offline verification",
+  "production_diff_matches_approved": true,
+  "source_sha256": "4f064637c2bb3d3914797e9c665f80cc973771d182600a08125d1fdad1f2eb3d",
+  "static_review": "pass: no changes to target, gain, clamping, IO ordering, watchdog or bus transaction count",
+  "tests_added": "3 existing success-path tests extended; 1 new failure/recovery test covers ordinary and NaN hold writes",
+  "rust_tests": "not run: rustc and cargo not available",
+  "robotd_build": "not run: toolchain unavailable",
+  "deployment": false,
+  "hardware_commands": false
+}

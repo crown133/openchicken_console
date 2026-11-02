@@ -1,0 +1,13 @@
+{
+  "file": "openchicken-front-v2.png",
+  "generator": "built-in image_gen",
+  "edit_target": "openchicken-front.png",
+  "change": "Remove both outer head hinge tabs and fastener holes; preserve red lower head shell and centered yellow chicken beak.",
+  "sha256": "8acd420b5069811839bf780230f5d01d419aa6292472f756374c4212fd10b802",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "alpha": "preserved",
+  "approved_for_integration": "User requested this head-shell correction on 2026-10-28."
+}

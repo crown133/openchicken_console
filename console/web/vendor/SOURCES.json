@@ -1,0 +1,32 @@
+[
+  {
+    "name": "three",
+    "version": "0.180.0",
+    "source_url": "https://registry.npmjs.org/three/-/three-0.180.0.tgz",
+    "destination": "/home/cyz/openchicken/third_party/_staging/console-deps-20261028/three-0.180.0.tgz",
+    "size": 7750248,
+    "sha256": "ad66d724565ee29a2467277fa84daa5ed0211d6b8d446e9ef29f6bae0cd14144",
+    "type": "gzip tar archive containing JavaScript source",
+    "executable": false
+  },
+  {
+    "name": "urdf-loader",
+    "version": "0.12.6",
+    "source_url": "https://registry.npmjs.org/urdf-loader/-/urdf-loader-0.12.6.tgz",
+    "destination": "/home/cyz/openchicken/third_party/_staging/console-deps-20261028/urdf-loader-0.12.6.tgz",
+    "size": 53275,
+    "sha256": "8bb10206c2df8521551b1f0a8d27806b11c42df401208665d10b2c392d2f18f0",
+    "type": "gzip tar archive containing JavaScript source",
+    "executable": false
+  },
+  {
+    "name": "uplot",
+    "version": "1.6.32",
+    "source_url": "https://registry.npmjs.org/uplot/-/uplot-1.6.32.tgz",
+    "destination": "/home/cyz/openchicken/third_party/_staging/console-deps-20261028/uplot-1.6.32.tgz",
+    "size": 164279,
+    "sha256": "4b8a8191e425658e3ea8c8c1314b0fc679c861ee3a1af2b20c7b16ba50b5133d",
+    "type": "gzip tar archive containing JavaScript source",
+    "executable": false
+  }
+]
