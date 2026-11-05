@@ -1,4 +1,4 @@
-import { tr } from './i18n.js?v=20261101-commissioning';
+import { tr } from './i18n.js?v=20261104-rt-rooster';
 
 const names=['A','B','X','Y','LB','RB','LT','RT','View','Start','LS','RS','↑','↓','←','→','Xbox'];
 const setText=(element,value)=>{if(element.textContent!==value)element.textContent=value;};
@@ -6,7 +6,7 @@ const axis=value=>Number.isFinite(value)?Math.max(-1,Math.min(1,value)):0;
 const buttonValue=button=>Number.isFinite(button?.value)?Math.max(0,Math.min(1,button.value)):button?.pressed?1:0;
 const face=(index,x,y,color)=>`<g class="pad-button pad-face" data-pad-button="${index}" style="--pad-button-color:${color}" transform="translate(${x} ${y})"><circle r="21"/><text y="7">${names[index]}</text></g>`;
 const stick=(index,x,y,label)=>`<g transform="translate(${x} ${y})"><circle class="pad-stick-well" r="49"/><circle class="pad-stick-rim" r="43"/><g data-pad-stick="${index}" class="pad-button pad-stick" data-pad-button="${index+10}"><circle r="29"/><circle class="pad-knob-ring" r="22"/><text y="5">${label}</text></g></g>`;
-const axisCard=(index,label,mapping)=>`<div class="pad-axis-card"><div class="pad-reading-title"><strong>${label}</strong><span>${mapping}</span></div><div class="pad-axis-body"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="pad-axis-range" cx="50" cy="50" r="38"/><path class="pad-crosshair" d="M8 50H92M50 8V92"/><circle class="pad-axis-deadzone" cx="50" cy="50" r="4.56"/><line data-pad-axis-line="${index}" x1="50" y1="50" x2="50" y2="50"/><circle class="pad-axis-point" data-pad-axis-dot="${index}" cx="50" cy="50" r="4"/></svg><div class="pad-axis-numbers"><span>X <output data-pad-axis="${index*2}">—</output></span><span>Y <output data-pad-axis="${index*2+1}">—</output></span></div></div></div>`;
+const axisCard=(index,label,mapping)=>`<div class="pad-axis-card"><div class="pad-reading-title"><strong>${label}</strong><span>${mapping}</span></div><div class="pad-axis-body"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="pad-axis-range" cx="50" cy="50" r="38"/><path class="pad-crosshair" d="M8 50H92M50 8V92"/><circle class="pad-axis-deadzone" cx="50" cy="50" r="3.8"/><line data-pad-axis-line="${index}" x1="50" y1="50" x2="50" y2="50"/><circle class="pad-axis-point" data-pad-axis-dot="${index}" cx="50" cy="50" r="4"/></svg><div class="pad-axis-numbers"><span>X <output data-pad-axis="${index*2}">—</output></span><span>Y <output data-pad-axis="${index*2+1}">—</output></span></div></div></div>`;
 
 // Read-only view: takes a browser Gamepad snapshot; it never sends or changes control input.
 export class GamepadView {
@@ -30,10 +30,10 @@ export class GamepadView {
       <g class="pad-button pad-direction" data-pad-button="12"><path d="M-12-32H12V-13L0-4-12-13Z"/></g><g class="pad-button pad-direction" data-pad-button="13"><path d="M-12 32H12V13L0 4-12 13Z"/></g><g class="pad-button pad-direction" data-pad-button="14"><path d="M-32-12V12H-13L-4 0-13-12Z"/></g><g class="pad-button pad-direction" data-pad-button="15"><path d="M32-12V12H13L4 0 13-12Z"/></g></g>
       ${face(3,477,127,'#b28a19')}${face(2,439,164,'#3978ce')}${face(1,515,164,'#d94f4b')}${face(0,477,201,'#2d9c65')}
       </svg><div class="pad-pressed"><span>${tr('按下')}</span><output data-pad-pressed>—</output></div></div>
-      <div class="pad-readings"><div class="pad-axes">${axisCard(0,'LS','vx / vy')}${axisCard(1,'RS','yaw')}</div>
+      <div class="pad-readings"><div class="pad-axes">${axisCard(0,'LS',tr('依当前模式'))}${axisCard(1,'RS',tr('依当前模式'))}</div>
       <div class="pad-triggers">${[0,1].map(i=>`<div><div class="pad-reading-title"><strong>${i?'RT':'LT'}</strong><output data-pad-trigger-value="${i}">—</output></div><div class="pad-trigger-track"><span data-pad-trigger-meter="${i}"></span></div></div>`).join('')}</div>
-      <div class="pad-shortcuts">${[['9','Start','初始化'],['4,1','LB + B','急停'],['4,0','LB + A','坐下 / 站起'],['4,2','LB + X','左脚踢球'],['4,3','LB + Y','右脚踢球']].map(([chord,key,label])=>`<div data-pad-chord="${chord}"><kbd>${key}</kbd><span>${tr(label)}</span></div>`).join('')}</div>
-      <p class="pad-raw-note">${tr('原始输入 · 中心死区 12% · 视图本身不发送指令')}</p></div></div>`;
+      <div class="pad-shortcuts">${[['9','Start','短按初始化 / 策略切换；长按 1.5 秒回位'],['8','Select / View','释放 2–4 秒休息；持续 4 秒关机'],['4,1','LB + B','停止并松力'],['4,0','LB + A','坐下 / 站起'],['4,13','LB + ↓','地面拾取'],['4,14','LB + ←','左脚踢球'],['4,15','LB + →','右脚踢球'],['4,12','LB + ↑','翻滚']].map(([chord,key,label])=>`<div data-pad-chord="${chord}"><kbd>${key}</kbd><span>${tr(label)}</span></div>`).join('')}</div>
+      <p class="pad-raw-note">${tr('十字键：← 行走 · ↑ 头部 · → 头部＋行走 · ↓ 机身姿态＋头部')}</p><p class="pad-raw-note">${tr('RT 按住超过 30% 持续鸡叫，松开收尾；LT 保留 Wheee。LT / RT 均按力度控制嘴部，取较大值。')}</p></div></div>`;
     this.buttons=[...element.querySelectorAll('[data-pad-button]')];
     this.sticks=[...element.querySelectorAll('[data-pad-stick]')];
     this.axes=[...element.querySelectorAll('[data-pad-axis]')];
@@ -48,9 +48,17 @@ export class GamepadView {
     this.pressed=element.querySelector('[data-pad-pressed]');
     this.update(null,0,true);
   }
+  bindings(profile) {
+    const actions={'4,0':['lb_a','sit_toggle','坐下 / 站起'],'4,13':['lb_down','ground_pick','地面拾取'],'4,14':['lb_left','kick_left','左脚踢球'],'4,15':['lb_right','kick_right','右脚踢球'],'4,12':['lb_up','roulade','翻滚']};
+    for(const node of this.chords){
+      const entry=actions[node.dataset.padChord];if(!entry)continue;
+      const [button,skill,label]=entry,actual=profile?.[button]||skill;
+      setText(node.querySelector('span'),actual===skill?tr(label):actual);
+    }
+  }
   update(pad,now,visible=true) {
     const connected=!!pad?.connected;
-    const supported=connected && pad.mapping==='standard' && pad.axes.length>=4 && pad.buttons.length>=10 && pad.axes.slice(0,4).every(Number.isFinite);
+    const supported=connected && pad.mapping==='standard' && pad.axes.length>=4 && pad.buttons.length>=16 && pad.axes.slice(0,4).every(Number.isFinite);
     const state=!visible?'paused':!connected?'disconnected':!supported?'unsupported':'connected';
     if(now-this.lastPaint<32 && this.element.dataset.state===state)return;
     this.lastPaint=now;

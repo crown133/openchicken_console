@@ -18,27 +18,27 @@ const assert=require('node:assert/strict');
   await p.locator('#input-source').selectOption('xbox');await p.waitForTimeout(150);
   const chord=async(indices)=>{await p.evaluate(ids=>ids.forEach(i=>pad.buttons[i].pressed=true),indices);await p.waitForTimeout(120);await p.evaluate(()=>pad.buttons.forEach(b=>b.pressed=false));await p.waitForTimeout(130);};
   await chord([9]);await p.waitForFunction(()=>document.querySelector('#machine-state').textContent==='Ready');
-  assert.equal(await p.evaluate(()=>sent.filter(m=>m.type==='init').length),1);
+  assert.equal(await p.evaluate(()=>sent.filter(m=>m.type==='pad_command'&&m.payload.actions.includes('init')).length),1);
   assert.equal(await p.evaluate(()=>sent.filter(m=>m.type==='enable').length),0);
   await p.locator('#enable').click();await p.waitForTimeout(160);
   await p.evaluate(()=>{sent=[];pad.axes=[-1,-1,-1,0];});await p.waitForTimeout(260);
-  const drives=await p.evaluate(()=>sent.filter(m=>m.type==='drive'));assert.ok(drives.some(m=>m.payload.vx===.4&&m.payload.vy===.3&&m.payload.vyaw===1));
-  await p.evaluate(()=>pad.axes=[0,0,0,0]);await p.waitForTimeout(180);assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='drive'&&Object.values(m.payload).every(v=>v===0))));
+  const drives=await p.evaluate(()=>sent.filter(m=>m.type==='pad_input'));assert.ok(drives.some(m=>m.payload.velocity.vx===.4&&m.payload.velocity.vy===.3&&m.payload.velocity.vyaw===1));
+  await p.evaluate(()=>pad.axes=[0,0,0,0]);await p.waitForTimeout(180);assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='pad_input'&&Object.values(m.payload.velocity).every(v=>v===0))));
   // Chords sent once, simulator confirms sit/stand and supports both kicks.
-  for(const [button,skill,wait] of [[0,'sit_toggle',2200],[0,'sit_toggle',2200],[2,'kick_left',1000],[3,'kick_right',1000]]){
-   await p.evaluate(()=>sent=[]);await chord([4,button]);assert.equal(await p.evaluate(skill=>sent.filter(m=>m.type==='action'&&m.payload.skill===skill).length,skill),1);await p.waitForTimeout(wait);
+  for(const [button,skill,wait] of [[0,'sit_toggle',2200],[0,'sit_toggle',2200],[14,'kick_left',1000],[15,'kick_right',1000]]){
+   await p.evaluate(()=>sent=[]);await chord([4,button]);assert.equal(await p.evaluate(skill=>sent.filter(m=>m.type==='pad_command'&&m.payload.actions.includes(skill)).length,skill),1);await p.waitForTimeout(wait);
   }
   // A real main-thread long task must release instead of renewing the old stick command.
   await p.evaluate(()=>{pad.axes[1]=-1;sent=[];});await p.waitForTimeout(180);
   await p.evaluate(()=>{sent=[];const end=performance.now()+280;while(performance.now()<end){};});await p.waitForTimeout(200);
-  assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='release')));assert.ok(await p.evaluate(()=>!sent.some(m=>m.type==='drive'&&m.payload.vx!==0)));
+  assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='release')));assert.ok(await p.evaluate(()=>!sent.some(m=>m.type==='pad_input'&&m.payload.velocity.vx!==0)));
   await p.evaluate(()=>pad.axes=[0,0,0,0]);await p.waitForTimeout(100);await p.locator('#claim').click();await p.waitForTimeout(160);
   await p.evaluate(()=>{pad.axes[1]=-1;sent=[];});await p.waitForTimeout(160);await p.evaluate(()=>{pad=null;sent=[];});await p.waitForTimeout(180);
-  assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='release')));assert.ok(await p.evaluate(()=>!sent.some(m=>m.type==='drive'&&m.payload.vx!==0)));
+  assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='release')));assert.ok(await p.evaluate(()=>!sent.some(m=>m.type==='pad_input'&&m.payload.velocity.vx!==0)));
   await p.evaluate(()=>pad={index:0,id:'Xbox test',connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false}))});await p.waitForTimeout(150);
   await p.locator('#claim').click();await p.waitForTimeout(150);await p.evaluate(()=>{pad.axes[1]=-1;sent=[];});await p.waitForTimeout(160);
   await p.keyboard.press('Space');await p.waitForTimeout(180);assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='release')));
-  await p.evaluate(()=>{sent=[];});await p.waitForTimeout(180);assert.ok(await p.evaluate(()=>!sent.some(m=>m.type==='drive'&&m.payload.vx!==0)));
+  await p.evaluate(()=>{sent=[];});await p.waitForTimeout(180);assert.ok(await p.evaluate(()=>!sent.some(m=>m.type==='pad_input'&&m.payload.velocity.vx!==0)));
   await p.evaluate(()=>pad.axes[1]=0);await p.waitForTimeout(100);await p.locator('#claim').click();await p.waitForTimeout(150);
   await p.evaluate(()=>{sent=[];window.dispatchEvent(new Event('blur'));});await p.waitForTimeout(180);assert.ok(await p.evaluate(()=>sent.some(m=>m.type==='release')));
   await p.evaluate(()=>sent=[]);await chord([4,1]);assert.equal(await p.evaluate(()=>sent.filter(m=>m.type==='relax').length),1);

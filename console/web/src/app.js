@@ -1,18 +1,24 @@
-import { RobotManager, commissioning } from './robot-manager.js?v=20261101-test-commands';
-import { GamepadView } from './gamepad-view.js?v=20261030-xbox-shape';
-import { XboxInput } from './gamepad.js?v=20261030-xbox';
-import { Viewer } from './viewer.js?v=20261030-live-3d';
+import { MouthPwm } from './mouth-pwm.js?v=20261104-pwm-copy';
+import { ServoParameters } from './servo-parameters.js?v=20261104-readback';
+import { ManagedBindings } from './managed-bindings.js?v=20261103-management';
+import { RobotManager, commissioning, setWorkspaceMode } from './robot-manager.js?v=20261104-workspace-modes';
+import { GamepadView } from './gamepad-view.js?v=20261104-lt-pwm';
+import { XboxInput } from './gamepad.js?v=20261104-trigger-neutral';
+import { Viewer } from './viewer.js?v=20261104-render-budget';
 import { JointChart } from './chart.js?v=20261030-three-curves';
 import { rawImu, mountedImu } from './imu_raw.js?v=20261030-head-mount';
 import { angleText } from './angles.js';
 import { jointFeed, modelPose } from './view-pose.js?v=20261030-live-3d';
 import { OrientationPanels } from './orientation-panel.js?v=20261029-fusion-monitor';
-import { tr, localize, locale } from './i18n.js?v=20261101-commissioning';
+import { tr, localize, locale, english } from './i18n.js?v=20261105-control-source';
 
 const $ = id => document.getElementById(id);
 const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (n, digits=1) => Number.isFinite(n) ? n.toFixed(digits) : '—';
+const managedBindings=new ManagedBindings();
+let managedButtonsSignature='';
 const SKILLS = [['sit_toggle','坐下 / 站起'],['ground_pick','地面拾取'],['kick_left','左脚踢球'],['kick_right','右脚踢球'],['roulade','翻滚']];
+let switchingMode=false, modeSelection=null, modeSyncBusy=false;
 let socket, connected=false, robots=[], selected='demo-01', jointId=13, held=null;
 let frozen=false, frozenState=null, frozenSamples=[], frozenEvents=[], replay=null, replayIndex=0, playing=false;
 let latestFrame=null, viewer=null, chart=null, lastUI=0, lastEventKey='', cachedRobot='', schemaKey='';
@@ -20,25 +26,70 @@ const pending=new Map(), histories=new Map(), keys=new Set();
 const orientationPanels=new OrientationPanels(()=>render(true));
 const xbox=new XboxInput();
 const gamepadView=new GamepadView($('gamepad-inspector'));
+const mouthPwm=new MouthPwm($('mouth-pwm'),{context:()=>({id:selected,online:!!live()?.online,state:live()?.mouth_pwm,allowed:commissioning&&connected&&!switchingMode&&!modeSyncBusy&&modeSelection===selected&&!frozen&&!replay&&!!live()?.online&&!!live()?.capabilities.pwm}),send:(id,payload)=>request('pwm',id,payload)});
 let padFrame=null, padSampleAt=0, padCommandBusy=false;
+const inputPauses=new Map();
+let padConnected=false, renderPending=false, sourceSwitching=false, shownSource=null;
+const pauseLabels={
+  stall:['页面卡顿','Page stalled'],changed:['手柄或机器人会话已更换','Controller or robot session changed'],focus:['窗口失焦','Window lost focus'],
+  disconnected:['手柄断连或设备已更换','Controller disconnected or changed'],
+  rejected:['命令未完成或被拒绝','Command failed or rejected'],
+  telemetry:['机器人反馈中断','Robot feedback interrupted'],host:['主机连接中断','Host disconnected'],
+  stale:['输入采样已过期','Input sample expired'],neutral:['等待摇杆回中','Waiting for neutral input'],
+  unavailable:['控制链路不可用','Control unavailable'],input:['手柄读取异常','Controller read failed']
+};
+function rememberPause(reason,detail='',id=selected) {
+  if($('input-source').value!=='xbox')return;
+  // Keep the first cause; a later blur/disconnect must not hide the original failure.
+  if(!inputPauses.has(id))inputPauses.set(id,{reason,detail,time:new Date().toLocaleTimeString(locale,{hour12:false})});
+  renderInputPause();
+}
+function pauseLabel(pause){const labels=pauseLabels[pause.reason]||pauseLabels.unavailable;return labels[english?1:0];}
+function renderInputPause(){
+  const pause=inputPauses.get(selected),box=$('input-pause');
+  box.hidden=!pause||$('input-source').value!=='xbox';
+  if(!pause)return;
+  const text=`${pause.time} · ${pauseLabel(pause)}${pause.detail?' · '+tr(pause.detail):''} · ${english?'Center sticks and release buttons, then acquire control again.':'摇杆回中并松开按键，再重新接管控制。'}`;
+  if(box.textContent!==text)box.textContent=text;
+}
+const renderedHTML=new WeakMap();
+function setHTML(element,html){
+  if(renderedHTML.get(element)===html)return;
+  renderedHTML.set(element,html);element.innerHTML=html;
+}
 let toastTimer, starting=false, stopping=false, startEpoch=0;
 function toast(text) { $('toast').textContent=tr(text); $('toast').hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').hidden=true,4500); }
-function request(type, robotId=selected, payload={}) {
+function request(type, robotId=selected, payload={}, sentAt=Date.now()) {
   if (!connected) return Promise.reject(new Error('主机连接已中断'));
   const id=crypto.randomUUID();
   return new Promise((resolve,reject) => {
-    const timer=setTimeout(()=>{pending.delete(id); reject(new Error('请求超时，结果未确认；请检查设备状态'));},1300);
-    pending.set(id,{resolve,reject,timer});
-    socket.send(JSON.stringify({id,type,robot_id:robotId,payload,sent_at:Date.now()}));
+    const fail=error=>reject(new Error(`${type}: ${tr(error.message)||(english?'No error detail returned':'未返回错误详情')}`));
+    const timer=setTimeout(()=>{pending.delete(id); fail(new Error('请求超时，结果未确认；请检查设备状态'));},type==='control_source'?55000:type==='set_mode'?4000:1300);
+    pending.set(id,{resolve,reject:fail,timer});
+    socket.send(JSON.stringify({id,type,robot_id:robotId,payload,sent_at:sentAt}));
   });
+}
+// Notifications have no request timer and are never retried or buffered by the UI.
+function notifyControl(type, robotId=selected, payload={}, sentAt=Date.now()) {
+  if(!connected || socket.readyState!==WebSocket.OPEN)throw new Error(tr('主机连接已中断'));
+  const robot=robots.find(r=>r.robot_id===robotId);
+  if(robot?.source==='robot' && robot.control_stream_version!==1)throw new Error(english?'Update the robot agent for notification-based control':'请更新机器人 agent 以支持无逐帧回执控制');
+  if(socket.bufferedAmount>0 || Date.now()-sentAt>=150){
+    if(!['pad_input','drive','heartbeat'].includes(type))toast(english?'Input busy or expired; action was not sent':'输入拥堵或过期；本次动作未发送');
+    return false;
+  }
+  socket.send(JSON.stringify({type,robot_id:robotId,payload,sent_at:sentAt,reply:false}));
+  return true;
 }
 function live() { return robots.find(r=>r.robot_id===selected); }
 function current() { return replay ? replay.samples[replayIndex]?.state : frozen ? frozenState : live() || latestFrame?.empty_state; }
 function samples() { return replay ? replay.samples : frozen ? frozenSamples : histories.get(selected)||[]; }
-function canControl() { const r=live(); return !commissioning && connected && !frozen && !replay && r?.online && r.capabilities.motion && ['simulation','robot'].includes(r.source); }
+function canReach() { const r=live(); return !switchingMode && modeSelection===selected && !commissioning && connected && !frozen && !replay && r?.online && r.capabilities.motion && r.control_channel!=='connecting' && r.control_channel!=='disconnected' && ['simulation','robot'].includes(r.source); }
+function canControl() { const r=live();return canReach()&&!sourceSwitching&&(r?.source!=='robot'||r.control_source?.mode==='console'); }
 function ready() { return canControl() && held===selected; }
 function clearKeys() { keys.clear(); document.querySelectorAll('[data-key]').forEach(e=>e.classList.remove('active')); }
-async function release() {
+async function release(reason,detail='') {
+  if(held && typeof reason==='string')rememberPause(reason,detail,held);
   startEpoch++;
   clearKeys();
   xbox.reset();padFrame=null;
@@ -49,15 +100,45 @@ async function release() {
 }
 async function choose(id) {
   if (id===selected || replay || !manager.confirmSelection(id)) return;
+  await mouthPwm.stop();
   await release();
   selected=id; frozen=false; frozenState=null; cachedRobot='';
+  await syncWorkspace();
   render(true);
 }
+async function syncWorkspace(){
+  if(!connected||modeSyncBusy||switchingMode||modeSelection===selected)return;
+  modeSyncBusy=true;const id=selected;
+  try{await request('set_mode',id,{mode:commissioning?'commissioning':'monitor'});modeSelection=id;}
+  catch(error){toast(error.message);}
+  finally{modeSyncBusy=false;renderControls();}
+}
+async function switchMode(mode){
+  if(switchingMode||modeSyncBusy||mode===(commissioning?'commissioning':'monitor'))return;
+  if(!connected){toast(english?'Host disconnected; reconnect before switching modes':'主机已断开，请重连后切换模式');return;}
+  if(mode==='commissioning'&&held&&!confirm(english?'Stop and relax this window’s robot, then enter Commissioning?':'停止并松力当前窗口控制的机器人，然后进入配置模式？'))return;
+  switchingMode=true;startEpoch++;clearKeys();xbox.reset();padFrame=null;
+  try{
+    await mouthPwm.stop();
+    renderControls();
+    await request('set_mode',selected,{mode});held=null;modeSelection=selected;
+    setWorkspaceMode(mode);manager.applyMode();render(true);
+  }catch(error){held=null;toast(error.message);}
+  finally{switchingMode=false;renderControls();}
+}
+document.addEventListener('click',event=>{
+  const link=event.target.closest('a');if(!link)return;
+  const url=new URL(link.href,location.href);
+  if(url.origin!==location.origin)return;
+  if(url.pathname.endsWith('/commissioning/')){event.preventDefault();void switchMode('commissioning');}
+  else if(link.hasAttribute('data-monitor')){event.preventDefault();void switchMode('monitor');}
+});
 function connect() {
-  socket=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}${commissioning?'/commissioning/ws':'/ws'}`);
-  socket.onopen=()=>{connected=true; $('connection').textContent=tr('主机已连接'); $('connection').className='badge green';};
+  socket=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}${'/ws?mode='+(commissioning?'commissioning':'monitor')}`);
+  socket.onopen=()=>{connected=true;modeSelection=null;void syncWorkspace(); $('connection').textContent=tr('主机已连接'); $('connection').className='badge green';};
   socket.onmessage=event=>{
     const message=JSON.parse(event.data);
+    if(message.type==='control_notice'){if(message.robot_id===selected)toast(message.error);return;}
     if (message.type==='reply') {
       const promise=pending.get(message.id);
       if (promise) { clearTimeout(promise.timer); pending.delete(message.id); message.ok ? promise.resolve(message.result) : promise.reject(new Error(message.error)); }
@@ -79,11 +160,13 @@ function connect() {
         if (history.length>1300) history.splice(0,history.length-1300);
       }
     }
-    if (held && (!robots.find(r=>r.robot_id===held)?.online)) release();
-    if (performance.now()-lastUI>(jointFeed(current())?45:90)) {lastUI=performance.now(); render();}
+    if (held && (!robots.find(r=>r.robot_id===held)?.online)) release('telemetry');
+    // Keep every telemetry sample; coalesce only the expensive visual updates.
+    renderPending=true;
   };
   socket.onclose=()=>{
-    connected=false; held=null; clearKeys();xbox.reset();padFrame=null;
+    if(held)rememberPause('host','',held);
+    connected=false; modeSelection=null;held=null; clearKeys();xbox.reset();padFrame=null;
     for (const p of pending.values()) {clearTimeout(p.timer);p.reject(new Error('主机连接已中断'));}
     pending.clear();
     $('connection').textContent=tr('主机已断开'); $('connection').className='badge amber';
@@ -93,6 +176,7 @@ function connect() {
 }
 function robotList() {
   manager.updateSelection(selected);
+  void syncWorkspace();
   const key=robots.map(r=>`${r.robot_id}:${r.online}:${r.controlled}`).join() + selected + !!replay;
   if (key===cachedRobot) return;
   cachedRobot=key;
@@ -123,20 +207,53 @@ function createSchematic(state) {
     group.onclick=select;group.onkeydown=e=>{if(e.key==='Enter' || e.key===' '){e.preventDefault();e.stopPropagation();select();}};
     $('schematic').append(group);
   }
+  const mouth=document.createElementNS('http://www.w3.org/2000/svg','g');
+  mouth.setAttribute('role','img');mouth.setAttribute('aria-label','Mouth PWM，无位置反馈');
+  mouth.innerHTML='<path class="node-leader" d="M220 155H300L322 100"/><circle cx="220" cy="155" r="5" fill="var(--unknown)"/><text x="326" y="95" class="node-name">mouth · PWM</text><text x="326" y="111" class="node-value">无位置反馈</text>';
+  $('schematic').append(mouth);
+}
+function renderManagedBindings() {
+  const row=manager?.data.robots.find(r=>r.robot_id===selected),target=row?{address:row.address,port:row.ssh_port,user:row.ssh_user}:null;
+  const entries=Object.fromEntries(Object.entries(row?.policy_management?.bindings||{}).filter(([,entry])=>JSON.stringify(entry.target)===JSON.stringify(target)));
+  if(managedBindings.configure(entries,`${selected}:${live()?.boot_id}`)&&held)void release();
+  const skills=(live()?.capabilities.skills||[]).filter(skill=>!SKILLS.some(([name])=>name===skill));
+  const signature=JSON.stringify([selected,skills,entries]);if(signature===managedButtonsSignature)return;managedButtonsSignature=signature;
+  document.querySelectorAll('[data-managed-skill]').forEach(button=>button.remove());
+  for(const skill of skills){
+    const entry=entries[skill];
+    const button=document.createElement('button');button.dataset.skill=skill;button.dataset.managedSkill='true';button.disabled=true;
+    button.textContent=(entry?.bindings.keyboard[0]?.code.replace('Digit','')||'')+' '+(entry?.label?.[english?'en':'zh']||skill);
+    button.onclick=()=>action(skill);if(new URLSearchParams(location.search).get('skill')===skill)button.title=english?'Selected for acceptance; press to run after enabling':'待验收动作；使能后点击执行';$('skills').append(button);
+  }
 }
 function renderControls() {
+  mouthPwm.render();
+  renderManagedBindings();
   const r=live();
+  $('control-source-panel').hidden=r?.source!=='robot';
+  const source=r?.control_source;
+  const sourceKey=selected+':'+source?.mode;
+  if(!sourceSwitching&&shownSource!==sourceKey){shownSource=sourceKey;$('control-source').value=source?.mode==='console'?'console':'bluetooth';}
+  $('control-source-status').textContent=sourceSwitching?'正在切换，两路控制暂时禁用':source?.error||({bluetooth:source?.input_ready?'蓝牙直连 · 手柄已连接，输入就绪':source?.bluetooth_connected?'蓝牙直连 · 已连接，输入设备准备中':'蓝牙直连 · 等待手柄连接（切回蓝牙模式并开机，可再次点击切换来源重试）',console:'监控端控制 · 板端手柄蓝牙已屏蔽',switching:'板端正在切换'}[source?.mode]||'控制来源服务未就绪，请更新板端');
+  $('control-source-apply').disabled=sourceSwitching||!canReach()||!source?.available||r?.enabled!==false||r?.bringup!=='Limp'||(r?.controlled&&held!==selected);
+  $('control-source').disabled=sourceSwitching;
+  const connectionLabel=!connected?(english?'Host disconnected':'主机断开'):!r?.online?(english?'Robot offline':'机器人离线'):commissioning?(english?'Robot online · Read-only':'机器人在线 · 只读'):r.control_channel==='not_configured'?(english?'Robot online · Control not configured':'机器人在线 · 控制未配置'):r.controlled&&held!==selected?(english?'Robot online · Control in use':'机器人在线 · 控制被占用'):r.control_channel==='connecting'?(english?'Robot online · Control connecting':'机器人在线 · 控制连接中'):r.control_channel==='connected'?(english?'Robot online · Control connected':'机器人在线 · 控制已连接'):(english?'Robot online · Control unavailable':'机器人在线 · 控制不可用');
+  if($('workspace-connection'))$('workspace-connection').textContent=connectionLabel;
+  document.querySelectorAll('[data-workspace]').forEach(b=>b.disabled=switchingMode||!connected);
+  gamepadView.bindings(r?.pad_profile?.bindings);
   $('claim').disabled=!canControl();$('claim').textContent=held===selected?'释放控制':'接管控制';
   $('enable').textContent=r?.protocol==='openchicken-runtime-v1'?'策略使能':'模拟使能';
   $('enable').disabled=!ready() || r?.enabled || r?.bringup!=='Ready';
   const stopMode=(r?.protocol==='openchicken-runtime-v1' ? r.enabled || ['Homing','Ready'].includes(r.bringup) : !!r?.torqued) || starting || stopping;
   $('start').className=stopMode?'estop-button':'start-button';
   $('start').dataset.action=stopMode?'estop':'start';
-  $('start').disabled=!canControl() || stopping || (stopMode?!r?.capabilities.relax:(!r?.capabilities.init || (r?.controlled && held!==selected)));
+  $('start').disabled=!canReach() || (!stopMode&&!canControl()) || stopping || (stopMode?!r?.capabilities.relax:(!r?.capabilities.init || (r?.controlled && held!==selected)));
   $('start').textContent=stopping?'急停中…':stopMode?'急停':'启动';
-  $('start').title=stopMode?'E-stop → Relax':'Start → Init';
+  $('start').title=$('start').disabled?connectionLabel:stopMode?'E-stop → Relax':'Start → Init';
   $('stop').disabled=!ready();
-  $('control-state').textContent=replay?'历史回放 · 控制已锁定':frozen?'画面定格 · 控制已释放':!canControl()?'此设备没有可用控制链路':held===selected?(r?.enabled?($('input-source').value==='xbox'?'已接管 · 手柄控制生效':'已接管 · 键盘控制生效'):'已接管 · 策略未使能'):r?.controlled?'其他窗口正在操控':'尚未接管';
+  const pause=$('input-source').value==='xbox'?inputPauses.get(selected):null;
+  renderInputPause();
+  $('control-state').textContent=pause?`${english?'Control paused':'控制已暂停'} · ${pauseLabel(pause)}`:replay?'历史回放 · 控制已锁定':frozen?'画面定格 · 控制已释放':!canControl()?'此设备没有可用控制链路':held===selected?(r?.enabled?($('input-source').value==='xbox'?'已接管 · 手柄控制生效':'已接管 · 键盘控制生效'):'已接管 · 策略未使能'):r?.controlled?'其他窗口正在操控':'尚未接管';
   const movingAllowed=ready() && r.bringup==='Ready' && r.enabled && !r.seated && r.action?.status!=='running';
   document.querySelectorAll('[data-key]').forEach(b=>b.disabled=!movingAllowed);
   document.querySelectorAll('[data-skill]').forEach(b=>b.disabled=!ready() || r.bringup!=='Ready' || !r.enabled || r.action?.status==='running' || !r.capabilities.skills.includes(b.dataset.skill) || (r.seated && b.dataset.skill!=='sit_toggle'));
@@ -167,7 +284,7 @@ function render(force=false) {
   const historic=state.source==='snapshot', stale=state.online===false && !replay && !frozen;
   $('robot-title').textContent=state.empty?'尚无机器人':state.robot_id;
   $('robot-subtitle').textContent=state.empty?'点击新机建档，添加第一台机器人':`OPENCHICKEN ALPHA / ${state.joints.length} 个关节 / ${state.profile_id?'待配置':historic?'历史审计':replay?'录制回放':state.source==='robot'?(state.protocol==='openchicken-runtime-v1'?'运控状态':jointFeed(state)?'关节只读':'系统只读'):'本地模拟机器人'}`;
-  $('mode-banner').textContent=state.empty?'尚无机器人连接 · 三维仅为模型参考，所有测量值未知':state.profile_id?'新机档案 · 尚未配置连接；无真实采样数据':commissioning?'配置测试只读展示 · 实际动作请在运行监控页操作':replay?'历史回放中 · 控制已释放':frozen?'画面已定格 · 控制已释放；后台继续接收数据':historic?`历史配置快照 · ${state.captured_at||'采集时间未记录'} · 灰色数值为历史寄存器换算；三维仅显示参考站姿`:stale?'机器人反馈中断 · 操控已禁用':state.protocol==='openchicken-runtime-v1'?`运控状态 · ${state.policy||'—'} · ${fmt(state.control_loop?.hz)} Hz`:state.source==='robot'?`${jointFeed(state)?'真实关节只读':'真实系统只读'} · ${state.collection_valid?'系统采集有效':'部分系统指标未知'} · 运控未接入`:'模拟数据 · 支持键盘控制及录制；真实机器人尚未接入。';
+  $('mode-banner').textContent=state.empty?'尚无机器人连接 · 三维仅为模型参考，所有测量值未知':state.profile_id?'新机档案 · 尚未配置连接；无真实采样数据':commissioning?(english?'Commissioning · Read-only telemetry · Switch to Monitor for motion':'配置模式 · 只读反馈 · 动作测试请切换运行监控'):replay?'历史回放中 · 控制已释放':frozen?'画面已定格 · 控制已释放；后台继续接收数据':historic?`历史配置快照 · ${state.captured_at||'采集时间未记录'} · 灰色数值为历史寄存器换算；三维仅显示参考站姿`:stale?'机器人反馈中断 · 操控已禁用':state.protocol==='openchicken-runtime-v1'?`运控状态 · ${state.policy||'—'} · ${fmt(state.control_loop?.hz)} Hz`:state.source==='robot'?`${jointFeed(state)?'真实关节只读':'真实系统只读'} · ${state.collection_valid?'系统采集有效':'部分系统指标未知'} · 运控未接入`:'模拟数据 · 支持键盘控制及录制；真实机器人尚未接入。';
   const pose=modelPose(state);
   $('pose-label').textContent=state.empty||state.profile_id?'参考站姿 · 关节未采集':state.source==='robot'?(pose.referenceOnly?(stale?'反馈中断 · 三维参考姿态':'参考站姿 · 关节未采集'):
     `${replay?'回放关节反馈':frozen?'已定格关节反馈':'实机关节反馈'}${state.protocol==='openchicken-runtime-v1'?' · 运控关节映射':state.model_verified?'':' · 仅监控 · 映射待校验'}${pose.measuredJoints<state.joints.length?' · 缺失关节显示参考角度':''}`):historic?'参考站姿 · 历史寄存器未标定':replay?'回放反馈位置':frozen?'已定格':stale?'反馈中断 · 保留最后姿态':'反馈位置';
@@ -178,7 +295,7 @@ function render(force=false) {
   renderRawImus(state);
   const sys=stale?{cpu_percent:null,memory_percent:null,cpu_temp:null,voltage:null,external_power:null,speaker:'未知',microphone:'未知'}:state.system, note=historic?'历史测量':stale?'离线':state.source==='simulation'?'模拟测量':'实时测量';
   const powerStatus=sys.external_power==null?'电池供电状态未知':sys.external_power?'电池供电已接入':'电池供电未接入';
-  $('metrics').innerHTML=metric('电池电压',`${fmt(sys.voltage)} V`,sys.voltage_source==='dxl_mean'?`${sys.voltage_samples}/14 有效 · 均值 · ${fmt(sys.voltage_min)}–${fmt(sys.voltage_max)} V · ${powerStatus}`:`${powerStatus} · ${note}`)+metric('CPU 温度',`${fmt(sys.cpu_temp)} °C`,`CPU ${fmt(sys.cpu_percent)}% · 内存 ${fmt(sys.memory_percent)}%`)+metric('关节状态',`${state.joints.filter(j=>j.valid && !stale).length} / ${state.joints.length}`,state.source==='robot'?(jointFeed(state)?`只读反馈 · ${state.joints.filter(j=>j.error||j.alert).length} 故障 · ${stale?'力矩未知':state.torqued===false?'无力矩':'力矩未知'}`:'关节与力矩未知'):historic?'历史状态，未实时校验':`${state.joints.filter(j=>j.error).length} 故障 · ${state.enabled?'已使能':'未使能'}`)+metric('扬声器',sys.speaker,'设备枚举与音频验证分开',true)+metric('麦克风',sys.microphone,'设备枚举与采音验证分开',true)+metric('相机','未接入','视频链路未接入',true);
+  setHTML($('metrics'),metric('电池电压',`${fmt(sys.voltage)} V`,sys.voltage_source==='dxl_mean'?`${sys.voltage_samples}/14 有效 · 均值 · ${fmt(sys.voltage_min)}–${fmt(sys.voltage_max)} V · ${powerStatus}`:`${powerStatus} · ${note}`)+metric('CPU 温度',`${fmt(sys.cpu_temp)} °C`,`CPU ${fmt(sys.cpu_percent)}% · 内存 ${fmt(sys.memory_percent)}%`)+metric('关节状态',`${state.joints.filter(j=>j.valid && !stale).length} / ${state.joints.length}`,state.source==='robot'?(jointFeed(state)?`只读反馈 · ${state.joints.filter(j=>j.error||j.alert).length} 故障 · ${stale?'力矩未知':state.torqued===false?'无力矩':'力矩未知'}`:'关节与力矩未知'):historic?'历史状态，未实时校验':`${state.joints.filter(j=>j.error).length} 故障 · ${state.enabled?'已使能':'未使能'}`)+metric('扬声器',sys.speaker,'设备枚举与音频验证分开',true)+metric('麦克风',sys.microphone,'设备枚举与采音验证分开',true)+metric('相机','未接入','视频链路未接入',true));
   const key=state.robot_id+state.joints.map(j=>j.id).join();
   if (schemaKey!==key) {
     schemaKey=key;
@@ -197,9 +314,8 @@ function render(force=false) {
     const value=node.querySelector('.node-value');value.setAttribute('fill',tint);value.textContent=angleText(stale?null:joint.position,angleUnit);
   }
   const joint=state.joints.find(j=>j.id===jointId);
-  $('joint-detail').innerHTML=`<strong title="ID ${joint.id} · ${esc(joint.label)} / ${esc(joint.name)}">ID ${joint.id} · ${esc(joint.label)} / ${esc(joint.name)}</strong><small>当前位置 ${angleText(stale?null:joint.position,angleUnit,true)} · ${fmt(stale?null:joint.voltage)} V · ${fmt(joint.current_ma,0)} mA · ${fmt(joint.temperature,0)} °C${historic?' · 历史值':''}</small>`;
-  const params=[['P / I / D',`${joint.p??'—'} / ${joint.i??'—'} / ${joint.d??'—'}`],['PWM slope / limit',`${joint.pwm_slope??'—'} / ${joint.pwm_limit??'—'}`],['Homing offset',joint.homing_offset??'—'],['Drive mode',joint.drive_mode??'—'],['寄存器方向',joint.drive_mode==null?'未知':joint.drive_mode&1?'反向':'正向'],['力矩',joint.torque==null?'未知':joint.torque?'开启':'关闭'],['硬件错误',joint.error==null?'未知':`0x${Number(joint.error).toString(16).padStart(2,'0')}`],['映射校验',state.protocol==='openchicken-runtime-v1'?'运控提供':state.model_verified?'已校验':'待实机校验']];
-  $('parameters').innerHTML=params.map(([label,value])=>`<div><label>${label}</label><b>${esc(value)}</b></div>`).join('');
+  setHTML($('joint-detail'),`<strong title="ID ${joint.id} · ${esc(joint.label)} / ${esc(joint.name)}">ID ${joint.id} · ${esc(joint.label)} / ${esc(joint.name)}</strong><small>当前位置 ${angleText(stale?null:joint.position,angleUnit,true)} · ${fmt(stale?null:joint.voltage)} V · ${fmt(joint.current_ma,0)} mA · ${fmt(joint.temperature,0)} °C${historic?' · 历史值':''}</small>`);
+  servoParameters.render(joint,state,manager.data.robots.find(r=>r.robot_id===state.robot_id),{recorded:!!replay||frozen||historic});
   const showAxes=$('joint-axes').checked;
   $('axis-info').hidden=!showAxes;
   $('axis-joint').textContent=`ID ${joint.id} · ${joint.label} / ${joint.name}`;
@@ -219,21 +335,35 @@ function render(force=false) {
     }
     $('packet-info').textContent=`丢帧 ${state.dropped||0} · 录制丢帧 ${rec.dropped||0} · ${state.telemetry_hz||20} Hz`;
   }
-  localize(document.querySelector('main'));
+  // Commissioning owns its translations. Never walk its large hidden forms per frame.
+  for(const id of ['robots','robot-subtitle','mode-banner','pose-label','imu-view-label','metrics','joint-select','schematic','joint-detail','axis-joint','events','record-status','packet-info','backend-mode'])localize($(id));
+
   if (replay) { $('seek').value=replayIndex; $('replay-time').textContent=`${(history[replayIndex].time-history[0].time).toFixed(1)} / ${(history.at(-1).time-history[0].time).toFixed(1)} s`; }
 }
 async function action(skill) {
   const button=document.querySelector(`[data-skill="${skill}"]`);
   if (!button || button.disabled) return;
   clearKeys();
-  try {await request('action',selected,{skill,action_id:crypto.randomUUID()});} catch(e){toast(e.message);}
+  try {notifyControl('action',selected,{skill,action_id:crypto.randomUUID()});} catch(e){toast(e.message);}
 }
 $('skills').innerHTML=SKILLS.map(([skill,label],i)=>`<button data-skill="${skill}" disabled><kbd>${i+1}</kbd>${label}</button>`).join('');
 document.querySelectorAll('[data-skill]').forEach(b=>b.onclick=()=>action(b.dataset.skill));
+$('control-source-apply').onclick=async()=>{
+  const id=selected,mode=$('control-source').value;
+  if($('control-source-apply').disabled)return;
+  sourceSwitching=true;renderControls();
+  try {
+    await release();
+    const state=await request('control_source',id,{mode});
+    const robot=robots.find(r=>r.robot_id===id);if(robot)robot.control_source=state;
+    toast(mode==='bluetooth'?(state.input_ready?'蓝牙手柄已连接，输入就绪':state.bluetooth_connected?'蓝牙已连接，输入设备准备中':'已切到蓝牙模式，但手柄尚未连接；请确认蓝牙模式和电源后重试'):'已切换监控端控制，可连接电脑接收器后接管');
+  } catch(error){toast(error.message);}
+  finally{sourceSwitching=false;shownSource=null;renderControls();}
+};
 $('claim').onclick=async()=>{
   if (held) return release();
   const id=selected;
-  try {await request('claim',id); held=id; if(selected!==id || frozen || replay || document.hidden)await release(); renderControls();} catch(e){toast(e.message);}
+  try {await request('claim',id); held=id;inputPauses.delete(id);renderInputPause(); if(selected!==id || frozen || replay || document.hidden)await release(); renderControls();} catch(e){rememberPause('rejected',e.message,id);toast(e.message);}
 };
 async function startRobot() {
   if ($('start').disabled || starting || stopping || $('start').dataset.action!=='start') return;
@@ -245,11 +375,12 @@ async function startRobot() {
     }
     held=id;
     await request('init',id);
-  } catch(e) {toast(e.message);await release();}
+    if(held===id && epoch===startEpoch){inputPauses.delete(id);renderInputPause();}
+  } catch(e) {rememberPause('rejected',e.message,id);toast(e.message);await release();}
   finally {starting=false;renderControls();}
 };
-async function stopRobot() {
-  if ($('start').disabled) return;
+async function stopRobot(fromPad=false) {
+  if (fromPad ? !canControl() : $('start').disabled) return;
   startEpoch++;clearKeys();xbox.reset();padFrame=null;stopping=true;const id=selected;renderControls();
   try {await request('relax',id);if(held===id)held=null;}
   catch(e) {toast(e.message);}
@@ -296,18 +427,19 @@ window.addEventListener('keydown',e=>{
   if (['KeyW','KeyS','KeyA','KeyD','Space'].includes(key) || /^Digit[1-5]$/.test(key)) e.preventDefault();
   if (e.repeat) return;
   if (key==='Space') { $('stop').click();return; }
+  const customSkill=managedBindings.keyboard(key);if(customSkill){e.preventDefault();action(customSkill);return;}
   if (/^Digit[1-5]$/.test(key)) {action(SKILLS[Number(key.at(-1))-1][0]);return;}
   const button=document.querySelector(`[data-key="${key}"]`);
   if(button && !button.disabled){keys.add(key);button.classList.add('active');}
 });
 window.addEventListener('keyup',e=>{const key=aliases[e.code]||e.code;keys.delete(key);document.querySelector(`[data-key="${key}"]`)?.classList.remove('active');});
-window.addEventListener('blur',release);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)release();});
+window.addEventListener('blur',()=>release('focus'));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)release('focus');});
 document.querySelectorAll('[data-key]').forEach(button=>{
   button.onpointerdown=e=>{if(button.disabled || $('input-source').value==='xbox')return;e.preventDefault();button.setPointerCapture(e.pointerId);keys.add(button.dataset.key);button.classList.add('active');};
   button.onpointerup=button.onpointercancel=button.onlostpointercapture=()=>{keys.delete(button.dataset.key);button.classList.remove('active');};
 });
-const padStatuses={disconnected:'未检测到手柄 · 按任意键连接',unsupported:'手柄布局不受支持',inactive:'手柄控制未激活',neutral:'请回中摇杆并松开按键',interrupted:'输入中断 · 请回中并重新接管',ready:'手柄已连接'};
+const padStatuses={disconnected:'未检测到手柄 · 按任意键连接',unsupported:'手柄布局不受支持',inactive:'手柄控制未激活',neutral:'请回中摇杆并松开按键',interrupted:'输入中断 · 请回中并重新接管',ready:'手柄已连接',configuration:'等待原生手柄配置或 agent 升级'};
 function renderInputView() {
   const source=$('input-source').value;
   document.querySelectorAll('[data-input-view]').forEach(element=>element.hidden=element.dataset.inputView!==source);
@@ -315,48 +447,73 @@ function renderInputView() {
 }
 $('input-source').onchange=()=>{release();xbox.reset();padFrame=null;renderInputView();};
 renderInputView();
-async function padCommand(command) {
-  if (command==='relax') {await stopRobot();return;}
-  if (padCommandBusy) return;
+async function padCommand(commands,sampledAt) {
+  if (commands.includes('relax')) {await stopRobot(true);return;}
+  if (padCommandBusy) {toast('手柄操作尚未完成；本次按键未执行');return;}
+  const profile=live()?.pad_profile,id=selected,epoch=startEpoch;
+  if (!profile || !canControl()) return;
+  if (held!==id && !commands.some(c=>['init','home','toggle'].includes(c))) return;
   padCommandBusy=true;
   try {
-    if (command==='init') await startRobot();
-    else await action(command);
-  } finally {padCommandBusy=false;}
+    if(held!==id){await request('claim',id);held=id;inputPauses.delete(id);renderInputPause();}
+    if(epoch!==startEpoch || selected!==id || document.hidden || !document.hasFocus() || Date.now()-sampledAt>150){
+      if(held===id)await release(document.hidden||!document.hasFocus()?'focus':'stale');return;
+    }
+    const payload={version:profile.version,sha256:profile.sha256,actions:commands};
+    if(commands.some(c=>['init','home','toggle'].includes(c)))await request('pad_command',id,payload,sampledAt);
+    else if(!notifyControl('pad_command',id,payload,sampledAt))return;
+    if(commands.some(c=>['rest','shutdown'].includes(c))){held=null;xbox.reset();padFrame=null;}
+  } catch(e){rememberPause('rejected',e.message,id);toast(e.message);if(held===id)await release();}
+  finally {padCommandBusy=false;renderControls();}
 }
 function pollGamepad(now) {
   try {
     const active=$('input-source').value==='xbox' && canControl() && !document.hidden && document.hasFocus() && !document.querySelector('dialog[open]');
     const pads=navigator.getGamepads?.() || [];
     const pad=Array.from(pads).find(p=>p?.connected);
-    gamepadView.update(pad,now,!document.hidden && document.hasFocus());
-    const result=xbox.poll(pad,now,`${selected}:${live()?.boot_id}`,active);
+    padConnected=!!pad?.connected;
+    // Raw input display is independent of focus; command gating above still requires it.
+    gamepadView.update(pad,now,!document.hidden);
+    const previousProfile=xbox.profile?.sha256;
+    xbox.configure(live()?.pad_profile);
+    if(previousProfile && previousProfile!==xbox.profile?.sha256 && $('input-source').value==='xbox' && held)void release();
+    const previousKey=xbox.key;
+    const result=xbox.poll(pad,now,`${selected}:${live()?.boot_id}`,active,live());
+    result.sampledAt=Date.now();
     padFrame=result;padSampleAt=now;
     const velocity=result.velocity;
-    const status=tr(padStatuses[result.status]);
+    const pause=inputPauses.get(selected);
+    const status=(pause?`${english?(padConnected?'Controller connected':'Controller disconnected'):(padConnected?'手柄已连接':'手柄未连接')} · ${english?'Control paused':'控制已暂停'}: ${pauseLabel(pause)}${pause.detail?' · '+tr(pause.detail):''}`:tr(padStatuses[result.status]))+' · '+tr({drive:'行走',head:'头部',head_drive:'头部＋行走',body_pose:'机身姿态＋头部'}[result.mode])+(result.status==='configuration'&&live()?.pad_error?' · '+live().pad_error:'');
     if ($('gamepad-status').textContent!==status) $('gamepad-status').textContent=status;
     const values=`vx ${velocity.vx.toFixed(2)} · vy ${velocity.vy.toFixed(2)} m/s · yaw ${velocity.vyaw.toFixed(2)} rad/s`;
     if ($('gamepad-values').textContent!==values) $('gamepad-values').textContent=values;
-    if (result.fault) {release();toast('手柄输入中断，已释放控制；请回中并重新接管');}
-    else if (result.command) void padCommand(result.command);
-  } catch {gamepadView.update(null,now);if(held && $('input-source').value==='xbox')void release();xbox.reset();padFrame=null;}
+    const customSkill=managedBindings.poll(pad,now,active&&ready()&&result.status==='ready',result.commands.length>0||result.fault);
+    if(customSkill)void action(customSkill);
+    if (result.fault) {release(result.status==='interrupted'?(previousKey!==xbox.key?'changed':'stall'):!padConnected?'disconnected':document.hidden||!document.hasFocus()?'focus':'unavailable');toast('手柄输入中断，已释放控制；请回中并重新接管');}
+    else if (result.commands.length) void padCommand(result.commands,result.sampledAt);
+  } catch(error) {gamepadView.update(null,now);if(held && $('input-source').value==='xbox')void release('input',error.message);xbox.reset();padFrame=null;}
   requestAnimationFrame(pollGamepad);
 }
 requestAnimationFrame(pollGamepad);
-window.addEventListener('blur',()=>gamepadView.update(null,performance.now(),false));
+function renderTelemetry(now){
+  requestAnimationFrame(renderTelemetry);
+  if(!renderPending||document.hidden||now-lastUI<100)return;
+  renderPending=false;lastUI=now;render();
+}
+requestAnimationFrame(renderTelemetry);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)gamepadView.update(null,performance.now(),false);});
 let controlBusy=false, wasMoving=false, lastControlTick=performance.now();
 setInterval(async()=>{
   const now=performance.now(), gap=now-lastControlTick;lastControlTick=now;
   // Check gaps before the busy/ownership gate: never renew cached input after a stalled frame.
-  if (gap>150 && held) {wasMoving=false;await release();return;}
+  if (gap>150 && held) {wasMoving=false;await release('stall');return;}
   if(controlBusy || !ready())return;
   const usePad=$('input-source').value==='xbox';
   // A disconnect can arrive between animation frames; verify identity again at send time.
   const connectedPad=usePad?Array.from(navigator.getGamepads?.()||[]).find(p=>p?.connected):null;
   const samePad=connectedPad && xbox.key===JSON.stringify([connectedPad.index,connectedPad.id,`${selected}:${live()?.boot_id}`]);
   if(usePad && (!samePad || !padFrame || padFrame.status!=='ready' || now-padSampleAt>100 || document.hidden || !document.hasFocus())) {
-    wasMoving=false;await release();return;
+    wasMoving=false;await release(!samePad?'disconnected':document.hidden||!document.hasFocus()?'focus':now-padSampleAt>100?'stale':'neutral');return;
   }
   controlBusy=true;
   const id=held;
@@ -364,11 +521,15 @@ setInterval(async()=>{
     const r=live();
     const velocity=usePad?padFrame.velocity:{vx:(Number(keys.has('KeyW'))-Number(keys.has('KeyS')))*0.12,vy:0,vyaw:(Number(keys.has('KeyA'))-Number(keys.has('KeyD')))*0.4};
     const moving=Object.values(velocity).some(v=>v!==0);
-    if (r.bringup==='Ready' && r.enabled && !r.seated && r.action?.status!=='running' && !padCommandBusy && !stopping && (moving||wasMoving))
-      await request('drive',id,velocity);
-    else await request('heartbeat',id);
+    if(usePad && padFrame.frame && !padCommandBusy && !stopping) {
+      const frame=structuredClone(padFrame.frame),profile=r.pad_profile;
+      if(r.bringup!=='Ready' || !r.enabled || r.seated || r.action?.status==='running')frame.velocity={vx:0,vy:0,vyaw:0};
+      notifyControl('pad_input',id,{...frame,version:profile.version,sha256:profile.sha256},padFrame.sampledAt);
+    } else if (r.bringup==='Ready' && r.enabled && !r.seated && r.action?.status!=='running' && !padCommandBusy && !stopping && (moving||wasMoving))
+      notifyControl('drive',id,velocity);
+    else notifyControl('heartbeat',id);
     wasMoving=moving;
-  } catch(e) {if(held===id)await release();toast(e.message);renderControls();}
+  } catch(e) {if(held===id)await release('rejected',e.message);toast(e.message);renderControls();}
   finally {controlBusy=false;}
 },100);
 
@@ -437,6 +598,15 @@ try {viewer=new Viewer($('viewer')); viewer.load().then(()=>{$('viewer').dataset
 catch(e){$('model-error').hidden=false;$('model-error').textContent=tr(`三维视图不可用：${e.message}`);}
 localize(document.documentElement);
 chart=new JointChart($('chart'));
-const manager=new RobotManager({select:choose,current:()=>selected,notify:toast,release});
+const manager=new RobotManager({select:choose,current:()=>selected,notify:toast,release,telemetryState:live,switchMode});
+const servoParameters=new ServoParameters($('parameters'),{
+  refresh:async()=>{await manager.refresh();render(true);},
+  readback:async()=>{
+    if(!commissioning)await switchMode('commissioning');
+    if(!commissioning)return;
+    manager.stage=2;manager.management.selectTab('tests');manager.renderTests();
+    document.querySelector('.servo-audit').scrollIntoView({block:'center',behavior:'smooth'});
+  }
+});
 await manager.init();
 connect();

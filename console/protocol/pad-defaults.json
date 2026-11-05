@@ -1,0 +1,130 @@
+{
+  "pad_axes": {
+    "deadzone": 0.1,
+    "drive": {
+      "vx": {
+        "source": "left_y",
+        "invert": false,
+        "gain": 1
+      },
+      "vy": {
+        "source": "left_x",
+        "invert": true,
+        "gain": 1
+      },
+      "vyaw": {
+        "source": "right_x",
+        "invert": true,
+        "gain": 1
+      }
+    },
+    "head": {
+      "neck_pitch": {
+        "source": "right_y",
+        "invert": false,
+        "gain": 1
+      },
+      "head_pitch": {
+        "source": "left_y",
+        "invert": true,
+        "gain": 1
+      },
+      "head_yaw": {
+        "source": "left_x",
+        "invert": true,
+        "gain": 1
+      },
+      "head_roll": {
+        "source": "right_x",
+        "invert": false,
+        "gain": 1
+      }
+    },
+    "head_drive": {
+      "vx": {
+        "source": "left_y",
+        "invert": false,
+        "gain": 1
+      },
+      "vy": {
+        "source": "none",
+        "invert": false,
+        "gain": 1
+      },
+      "vyaw": {
+        "source": "left_x",
+        "invert": true,
+        "gain": 1
+      },
+      "neck_pitch": {
+        "source": "none",
+        "invert": false,
+        "gain": 1
+      },
+      "head_pitch": {
+        "source": "right_y",
+        "invert": true,
+        "gain": 1
+      },
+      "head_yaw": {
+        "source": "right_x",
+        "invert": true,
+        "gain": 1
+      },
+      "head_roll": {
+        "source": "none",
+        "invert": false,
+        "gain": 1
+      }
+    },
+    "body_pose": {
+      "z": {
+        "source": "left_y",
+        "invert": false,
+        "gain": 1
+      },
+      "pitch": {
+        "source": "none",
+        "invert": false,
+        "gain": 1
+      },
+      "roll": {
+        "source": "left_x",
+        "invert": false,
+        "gain": 1
+      },
+      "neck_pitch": {
+        "source": "none",
+        "invert": false,
+        "gain": 1
+      },
+      "head_pitch": {
+        "source": "right_y",
+        "invert": true,
+        "gain": 1
+      },
+      "head_yaw": {
+        "source": "right_x",
+        "invert": true,
+        "gain": 1
+      },
+      "head_roll": {
+        "source": "none",
+        "invert": false,
+        "gain": 1
+      }
+    }
+  },
+  "pad_head": {
+    "neck_pitch_max": 2.5,
+    "head_pitch_max": 2.5,
+    "head_yaw_max": 2.5,
+    "head_roll_max": 2.5
+  },
+  "pad_body": {
+    "z_min": -0.025,
+    "z_max": 0.01,
+    "pitch_max": 0.2618,
+    "roll_max": 0.2618
+  }
+}

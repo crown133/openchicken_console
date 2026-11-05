@@ -1,0 +1,38 @@
+{
+  "schema": "microduck_supertracking_embedded_v1",
+  "name": "tracking_demo",
+  "kind": "episodic",
+  "duration_s": 12,
+  "onnx_file": "policy_embedded.onnx",
+  "inputs": {
+    "history": {
+      "shape": [
+        "batch",
+        10,
+        48
+      ],
+      "dtype": "float32"
+    },
+    "time_step": {
+      "shape": [
+        "batch",
+        1
+      ],
+      "dtype": "int64"
+    }
+  },
+  "outputs": {
+    "action": {
+      "shape": [
+        "batch",
+        14
+      ],
+      "dtype": "float32"
+    }
+  },
+  "reference_storage": "embedded",
+  "reference_frames": 600,
+  "playback_mode": "loop",
+  "control_frequency_hz": 50,
+  "history_order": "oldest to newest, including current observation"
+}

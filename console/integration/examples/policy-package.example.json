@@ -1,0 +1,65 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "name": "polite_bow",
+  "description": "示例：站立鞠躬后返回基础策略；参数必须与实际训练模型一致",
+  "file": "policy.onnx",
+  "obs_len": 61,
+  "action_len": 14,
+  "robot": {
+    "model": "microduck",
+    "servos": "xl330",
+    "control_hz": 50
+  },
+  "kind": "episodic",
+  "duration_s": 4.0,
+  "chain": false,
+  "entry_pose": "standing",
+  "unwind_s": 0.0,
+  "command": {
+    "encoding": "constant",
+    "idle": [0.0, 0.0, 0.0]
+  },
+  "openchicken": {
+    "package_version": "1.0.0",
+    "runtime_profile": "microduck_alpha_61x14_v1",
+    "label": {"zh": "鞠躬", "en": "Bow"},
+    "observations": {
+      "input": "obs",
+      "dtype": "float32",
+      "shape": [1, 61],
+      "normalization": "embedded_in_onnx",
+      "layout": [
+        {"source": "body.angular_velocity", "size": 3, "frame": "body", "unit": "rad/s"},
+        {"source": "body.projected_gravity", "size": 3, "frame": "body", "unit": "unit_vector"},
+        {"source": "joints.position_minus_home", "size": 14, "unit": "rad"},
+        {"source": "joints.velocity", "size": 14, "unit": "rad/s"},
+        {"source": "policy.previous_raw_action", "size": 14},
+        {"source": "command.microduck13", "size": 13}
+      ]
+    },
+    "actions": {
+      "shape": [1, 14],
+      "interpretation": "scaled_offset_from_home",
+      "target_unit": "rad",
+      "joint_names": [
+        "left_hip_yaw", "left_hip_roll", "left_hip_pitch", "left_knee", "left_ankle",
+        "neck_pitch", "head_pitch", "head_yaw", "head_roll",
+        "right_hip_yaw", "right_hip_roll", "right_hip_pitch", "right_knee", "right_ankle"
+      ]
+    },
+    "execution": {
+      "command": [0.0, 0.0, 0.0]
+    },
+    "runtime_tuning": {
+      "head_lowpass": 0.5,
+      "legs_lowpass": 0.7,
+      "voltage_adapt": true,
+      "nominal_voltage": 7.4
+    },
+    "bindings": {
+      "keyboard": [{"code": "Digit6", "event": "press"}],
+      "browser_gamepad": [{"mapping": "standard", "buttons": ["LB", "RB"], "event": "press"}]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-02",
+  "source": "new repository, live browser screenshots",
+  "url": "http://127.0.0.1:8106/en/",
+  "mode": "simulation (--demos 3)",
+  "viewport": {
+    "width": 1600,
+    "height": 1180
+  },
+  "webgl": "URDF loaded, SwiftShader",
+  "commands_sent": false,
+  "files": [
+    "monitor-light.png",
+    "monitor-dark.png"
+  ],
+  "page_errors": []
+}

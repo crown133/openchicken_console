@@ -333,6 +333,29 @@ class IntegrationTests(unittest.IsolatedAsyncioTestCase):
         await a.close()
         await b.close()
 
+    async def test_workspace_switch_relaxes_own_robot_and_blocks_later_input(self):
+        a, b = await self.websocket(), await self.websocket()
+        try:
+            self.assertTrue((await self.command(a, 'claim'))['ok'])
+            self.assertTrue((await self.command(a, 'init'))['ok'])
+            self.assertTrue((await self.command(b, 'claim', 'demo-02'))['ok'])
+            result = await self.command(a, 'set_mode', payload={'mode':'commissioning'})
+            self.assertTrue(result['ok'], result)
+            self.assertEqual(result['result']['mode'], 'commissioning')
+            self.assertFalse((await self.command(a, 'init'))['ok'])
+            self.assertFalse((await self.command(a, 'drive', payload={'vx':.1}))['ok'])
+            self.assertTrue((await self.command(b, 'heartbeat', 'demo-02'))['ok'])
+            await asyncio.sleep(.1)
+            robots = {r['robot_id']:r for r in self.app['console'].frame('test')['robots']}
+            self.assertFalse(robots['demo-01']['torqued'])
+            self.assertTrue(robots['demo-01']['online'])
+            self.assertTrue((await self.command(a, 'set_mode', payload={'mode':'monitor'}))['ok'])
+            # Returning to Monitor neither claims nor re-enables the robot.
+            self.assertFalse((await self.command(a, 'drive', payload={'vx':.1}))['ok'])
+        finally:
+            await a.close()
+            await b.close()
+
     async def test_record_download_and_web_origin(self):
         ws = await self.websocket()
         result = await self.command(ws, 'record_start')

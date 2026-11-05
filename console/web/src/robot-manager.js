@@ -1,13 +1,14 @@
-import { renderTestCommands } from './test-commands.js?v=20261101-test-commands';
+import { Management } from './management.js?v=20261104-betop-pair';
+import { TestWorkspace } from './test-workspace.js';
 import { CommissioningTelemetry } from './commissioning-telemetry.js?v=20261101-early-zmq';
-import { SshChecks } from './ssh-checks.js?v=20261101-ssh-checks';
+import { SshChecks } from './ssh-checks.js?v=20261103-shared-ssh';
 import { english } from './i18n.js?v=20261101-commissioning';
 import { stages } from './commissioning-steps.js?v=20261101-early-zmq';
-export const commissioning=location.pathname.endsWith('/commissioning/');
+export let commissioning=location.pathname.endsWith('/commissioning/')||new URLSearchParams(location.search).get('mode')==='commissioning';
+export function setWorkspaceMode(mode){commissioning=mode==='commissioning';document.documentElement.dataset.page=mode;}
 const t=(zh,en)=>english?en:zh;
 const pick=pair=>pair[english?1:0];
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const states={pending:['待测','Pending'],passed:['通过','Passed'],failed:['失败','Failed'],deferred:['暂缓','Deferred'],not_applicable:['不适用','Not applicable'],accepted:['现场确认接受','Accepted on site']};
 const fields=[['robot_id','robot_id','text'],['name',t('显示名称','Display name'),'text'],['hostname','hostname','text'],['address',t('IP / 主机地址','IP / host address'),'text'],['ssh_user',t('SSH 用户','SSH user'),'text'],['ssh_port',t('SSH 端口','SSH port'),'number'],['state_port',t('状态端口','State port'),'number'],['control_port',t('控制端口','Control port'),'number'],['robot_public_key',t('机器人 CURVE 公钥（可后补）','Robot CURVE public key (optional)'),'text']];
 const hints={
  robot_id:t('自动建议未占用的编号，可修改；与正式机器人配置保持一致。','Suggested unused ID; editable. Match the deployed robot configuration.'),
@@ -29,11 +30,11 @@ const connectionGuide=(values,id)=>{
  return `<div class="ssh-guide"><strong>${t('连接新机 · 网页检查或主机终端','Connect a new robot · Browser checks or host terminal')}</strong><ol><li>${t('机器人与监控主机接入可互通的网络，确认机器人已开启 SSH。','Connect the robot and monitor host to reachable networks; ensure SSH is enabled on the robot.')}</li><li>${t('填写实际 IP 和 SSH 用户，在监控主机终端运行下方命令。','Enter the actual IP and SSH user, then run the command below in a terminal on the monitor host.')}</li><li>${t('首次连接核对主机指纹；按提示使用密码或已配置的 SSH 密钥。登录后运行 hostname，回填实际名称。','Verify the host fingerprint on first connection; authenticate with your password or configured SSH key. Run hostname after login and enter the actual name above.')}</li></ol><div class="ssh-command"><code data-ssh-command>${esc(command)||t('填写实际 IP、SSH 用户和有效端口后生成命令','Enter the actual IP, SSH user and valid port to generate a command')}</code><button type="button" id="${id}" ${command?'':'disabled'}>${t('复制命令','Copy command')}</button></div><p class="hint">${t('保存档案后，在测试页上方的 SSH 实际检查中核对指纹、输入密码并执行 N01。也可复制此命令手动登录。5557/5558 与 CURVE 公钥用于后续正式监控。','After saving, verify the fingerprint, enter the password and run N01 in Execute SSH checks. You can also copy this command for manual login. Ports 5557/5558 and CURVE are for later runtime monitoring.')}</p></div>`;
 };
 export class RobotManager {
- constructor({select,current,notify,release}) {
-  this.select=select;this.current=current;this.notify=notify;this.release=release;this.data={revision:-1,robots:[],default_id:null};this.stage=0;this.item=0;this.dirty=false;
+ constructor({select,current,notify,release,telemetryState,switchMode}) {
+  this.switchMode=switchMode;this.telemetryState=telemetryState;this.select=select;this.current=current;this.notify=notify;this.release=release;this.data={revision:-1,robots:[],default_id:null};this.stage=0;this.item=0;this.dirty=false;
   const nav=document.createElement('nav');nav.className='page-navigation';nav.setAttribute('aria-label',t('工作页面','Workspace'));
-  const prefix=english?'/en/':'/';
-  nav.innerHTML=`<div><a class="${commissioning?'':'active'}" href="${prefix}" ${commissioning?'target="_blank" rel="noopener"':''}>${t('运行监控','Monitor')}</a><a class="${commissioning?'active':''}" href="${prefix}commissioning/" ${commissioning?'':'target="_blank" rel="noopener"'}>${t('配置测试','Commissioning')} ↗</a></div><div><span class="muted" id="registry-status"></span><button id="manage-robots">${t('机器人管理','Manage robots')}</button><button id="new-robot" class="primary">＋ ${t('新机建档','New robot')}</button></div>`;
+  nav.innerHTML=`<div role="group" aria-label="${t('工作模式','Workspace mode')}"><button data-workspace="monitor">${t('运行监控','Monitor')}</button><button data-workspace="commissioning">${t('配置测试','Commissioning')}</button><span id="workspace-connection" class="badge" role="status"></span></div><div><span class="muted" id="registry-status"></span><button id="manage-robots">${t('机器人管理','Manage robots')}</button><button id="new-robot" class="primary">＋ ${t('新机建档','New robot')}</button></div>`;
+  nav.querySelectorAll('[data-workspace]').forEach(button=>button.onclick=()=>void this.switchMode(button.dataset.workspace));
   document.querySelector('.titlebar').before(nav);
   document.body.insertAdjacentHTML('beforeend',`<dialog id="robot-manager"><div class="panel-head"><h2>${t('机器人档案','Robot dossiers')}</h2><button data-close>${t('关闭','Close')}</button></div><p class="hint">${t('档案在两个页面共享。SSH 只读检查在测试页执行；测试页可配置并连接早期只读 ZMQ；正式运控仍由启动配置管理。','Dossiers are shared between pages. Run read-only SSH checks from Commissioning; Commissioning supports early read-only ZMQ setup and connections; production runtime remains managed by startup configuration.')}</p><div id="dossier-list"></div><button id="manager-add">＋ ${t('新机建档','New robot')}</button></dialog>
   <dialog id="robot-editor"><form id="dossier-form"><div class="panel-head"><h2 id="dossier-title">${t('编辑机器人档案','Edit robot dossier')}</h2><button type="button" data-close>${t('关闭','Close')}</button></div><div class="dossier-fields">${fields.map(([key,label,type])=>`<label>${label}<input name="${key}" type="${type}" ${key==='robot_id'?'required pattern="[A-Za-z0-9_-]{1,64}"':''} ${type==='number'?'required min="1" max="65535" step="1"':'maxlength="200"'} autocomplete="off">${hints[key]?`<small>${esc(hints[key])}</small>`:''}</label>`).join('')}<label class="wide">${t('硬件、供电与装配备注','Hardware, power and assembly notes')}<textarea name="notes" maxlength="4000" rows="3"></textarea></label></div><p class="hint">${t('hostname 与 SSH 用户分别填写。不要在备注中保存密码或私钥。修改档案不会修改机器人端配置。','Enter hostname and SSH user separately. Do not store passwords or private keys in notes. Editing a dossier does not change robot-side configuration.')}</p><div id="dossier-connection-guide"></div><p id="dossier-error" role="alert"></p><div class="dialog-actions"><button type="submit" class="primary">${t('保存档案','Save dossier')}</button></div></form></dialog>`);
@@ -42,10 +43,10 @@ export class RobotManager {
   document.getElementById('new-robot').onclick=document.getElementById('manager-add').onclick=()=>this.edit();
   document.getElementById('dossier-form').onsubmit=event=>{event.preventDefault();void this.save(event.currentTarget);};
   document.getElementById('dossier-form').addEventListener('input',()=>this.updateConnectionGuide());
-  if(commissioning){this.setupTests();document.querySelector('.titlebar .eyebrow').textContent=t('新机配置 / 测试工作台','COMMISSIONING / TEST WORKSPACE');}
+  this.setupTests();
  }
  confirmSelection(id) {
-  return !commissioning||!this.dirty||id===this.current()||confirm(t('切换机器人将放弃未保存的记录，继续？','Switch robots and discard the unsaved record?'));
+  return !commissioning||!(this.dirty||this.management?.joints?.dirty)||id===this.current()||confirm(t('切换机器人将放弃未保存的记录，继续？','Switch robots and discard the unsaved record?'));
  }
  async init() {
   await this.refresh();
@@ -53,7 +54,26 @@ export class RobotManager {
   const row=this.data.robots.find(r=>r.robot_id===query)||this.data.robots.find(r=>r.id===this.data.default_id);
   // Selection only: this never acquires control or starts a robot.
   if(row)await this.select(row.robot_id);
+  this.management=new Management(document.querySelector('.commissioning-panel'),{commissioning:true});
+  this.monitorManagement=new Management(document.querySelector('.control-panel'));
+  this.management.root.classList.add('commissioning-only');
+  this.monitorManagement.root.classList.add('monitor-only');
+  this.workspace=new TestWorkspace(this);
+  this.management.setProfile(this.data.robots.find(r=>r.robot_id===this.current()));
+  this.applyMode();
   this.timer=setInterval(()=>{if(!document.hidden)void this.refresh();},2000);
+ }
+ applyMode(){
+  const mode=commissioning?'commissioning':'monitor';
+  setWorkspaceMode(mode);
+  document.querySelectorAll('[data-workspace]').forEach(button=>{button.classList.toggle('active',button.dataset.workspace===mode);button.setAttribute('aria-pressed',String(button.dataset.workspace===mode));});
+  document.querySelector('.titlebar .eyebrow').textContent=commissioning?t('新机配置 / 测试工作台','COMMISSIONING / TEST WORKSPACE'):t('机器人监控','ROBOT MONITOR');
+  const row=this.data.robots.find(r=>r.robot_id===this.current());
+  this.monitorManagement?.setProfile(row);
+  if(commissioning)this.renderTests();
+  const url=new URL(location.href);url.pathname=english?'/en/':'/';url.searchParams.set('mode',mode);
+  url.searchParams.delete('robot');
+  history.replaceState(null,'',url);
  }
  async refresh() {
   if(this.loading)return;
@@ -62,7 +82,7 @@ export class RobotManager {
    const response=await fetch('/api/robots',{cache:'no-store'});if(!response.ok)throw Error(t('档案服务不可用','Dossier service unavailable'));
    const data=await response.json();
    document.getElementById('registry-status').textContent=t('档案已同步','Dossiers synced');
-   if(data.revision!==this.data.revision){this.data=data;this.list();if(commissioning&&!this.dirty)this.renderTests();}
+   if(data.revision!==this.data.revision){this.data=data;this.management?.setProfile(data.robots.find(r=>r.robot_id===this.current()));this.list();if(commissioning&&!this.dirty)this.renderTests();}
   } catch(error){document.getElementById('registry-status').textContent=error.message;}
   finally{this.loading=false;}
  }
@@ -134,47 +154,19 @@ export class RobotManager {
   const telemetry=document.createElement('div');telemetry.className='telemetry-panel';ssh.after(telemetry);this.telemetry=new CommissioningTelemetry(telemetry);
  }
  updateSelection(id) {
+  this.management?.setProfile(this.data.robots.find(r=>r.robot_id===id));
+  this.monitorManagement?.setProfile(this.data.robots.find(r=>r.robot_id===id));
   if(!commissioning||this.selected===id)return;
   this.selected=id;this.dirty=false;this.renderTests();
  }
  renderTests() {
   if(!commissioning)return;
   const row=this.data.robots.find(r=>r.robot_id===this.current());
-  this.ssh.setProfile(row);
-  this.telemetry.setProfile(row);
-  document.getElementById('test-stages').innerHTML=stages.map((s,i)=>{
-   const count=[0,1,2].filter(n=>row?.results[`${s[0]}.${n}`]?.status&&row.results[`${s[0]}.${n}`].status!=='pending').length;
-   return `<button class="${i===this.stage?'active':''}" data-stage="${i}" aria-current="${i===this.stage?'step':'false'}"><strong>${s[0]}</strong> ${esc(pick(s[1]))}<small>${count}/3 ${t('已记录','recorded')}</small></button>`;
-  }).join('');
+  this.ssh.setProfile(row);this.telemetry.setProfile(row);
+  document.getElementById('test-stages').innerHTML=stages.map((s,i)=>`<button class="${i===this.stage?'active':''}" data-stage="${i}" aria-current="${i===this.stage?'step':'false'}"><strong>${s[0]}</strong> ${esc(pick(s[1]))}</button>`).join('');
   document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{
-   if(this.dirty&&!confirm(t('放弃未保存的记录？','Discard the unsaved record?')))return;
-   this.stage=Number(b.dataset.stage);this.item=0;this.dirty=false;this.renderTests();
+   this.stage=Number(b.dataset.stage);this.item=0;this.renderTests();
   });
-  const s=stages[this.stage], step=`${s[0]}.${this.item}`,item=s[4][this.item],result=row?.results[step]||{status:'pending',notes:''};
-  this.resultRevision=this.data.revision;
-  document.getElementById('test-guide').innerHTML=`<div class="test-context"><strong>${esc(row?.robot_id||this.current())}</strong><span>${t('数据源：所选机器人的状态订阅；未连接或缺失的测量显示未知','Source: selected robot telemetry; disconnected or missing measurements remain unknown')}</span></div>${this.stage===0&&row?connectionGuide(row,'copy-stage-ssh'):''}<h2>${s[0]} · ${esc(pick(s[1]))}</h2><p>${esc(pick(s[2]))}</p><div class="guide-precondition"><strong>${t('准备条件','Before starting')}</strong><p>${esc(pick(s[3]))}</p></div><div class="test-items">${s[4].map((v,i)=>`<button class="${this.item===i?'active':''}" data-item="${i}">${i+1}. ${esc(pick(v[0]))}<small>${pick(states[row?.results[`${s[0]}.${i}`]?.status||'pending'])}</small></button>`).join('')}</div><h3>${t('操作与观察','Procedure & observation')} · ${esc(pick(item[0]))}</h3><p class="test-instruction">${esc(pick(item[1]))}</p><div class="guide-precondition"><strong>${t('判断与收尾','Acceptance & finish')}</strong><p>${esc(pick(s[5]))}</p></div><p class="hint">${t('按需查看上方 3D / Robot Status 和下方关节曲线。上方 SSH 区域仅执行列出的只读检查，其余项目按说明实施并记录；不会自动判定通过。','Use the 3D / Robot Status panels above and joint chart below as needed. The SSH panel executes only the listed read-only checks. Perform and record other items as instructed; nothing is marked passed automatically.')}</p><form id="test-result"><label>${t('验收结论','Acceptance result')}<select name="status">${Object.entries(states).map(([value,label])=>`<option value="${value}" ${value===result.status?'selected':''}>${pick(label)}</option>`).join('')}</select></label><label>${t('实际观察、证据路径、操作员或暂缓原因','Observations, evidence paths, operator or reason for deferral')}<textarea name="notes" rows="4" maxlength="8000">${esc(result.notes)}</textarea></label><div class="dialog-actions"><button type="submit" class="primary" ${row?'':'disabled'}>${t('保存本项记录','Save item record')}</button><button type="button" id="export-dossier" ${row?'':'disabled'}>${t('导出记录 JSON','Export records JSON')}</button><span id="result-message" role="status">${row?(result.updated_at?esc(result.updated_at):''):t('先新机建档，才能保存验收记录','Create a dossier before saving acceptance records')}</span></div></form>`;
-  if(/^N0[2-6]$/.test(s[0])){
-   const commands=document.createElement('div');
-   document.querySelector('#test-guide .test-instruction').after(commands);
-   renderTestCommands(commands,step,row);
-  }
-  if(this.stage===0&&row)this.bindCopy('copy-stage-ssh',sshCommand(row));
-  if(['N07','N08','N09'].includes(s[0])){
-   const link=document.createElement('a');link.className='monitor-handoff';link.target='_blank';link.rel='noopener';link.href=(english?'/en/':'/')+'?robot='+encodeURIComponent(row?.robot_id||this.current());link.textContent=t('打开运行监控进行本项测试 ↗（需先退出临时采集器并接入正式运控）','Open Monitor for this test ↗ (stop temporary collectors and connect production runtime first)');document.getElementById('test-guide').querySelector('h2').after(link);
-  }
-  document.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{
-   if(this.dirty&&!confirm(t('放弃未保存的记录？','Discard the unsaved record?')))return;
-   this.item=Number(b.dataset.item);this.dirty=false;this.renderTests();
-  });
-  const form=document.getElementById('test-result');form.oninput=()=>{this.dirty=true;};
-  form.onsubmit=async event=>{
-   event.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;
-   try{await this.change({action:'result',revision:this.resultRevision,id:row.id,step,result:Object.fromEntries(new FormData(form))});this.dirty=false;this.renderTests();document.getElementById('result-message').textContent=t('已保存人工记录','Operator record saved');}
-   catch(e){document.getElementById('result-message').textContent=e.message;button.disabled=false;}
-  };
-  document.getElementById('export-dossier').onclick=()=>{
-   const blob=new Blob([JSON.stringify({schema_version:1,exported_at:new Date().toISOString(),guide:'新机标准部署与测试流程 V1 / 2026-10-30',robot:row},null,2)],{type:'application/json'});
-   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${row.robot_id}-commissioning.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  };
+  this.workspace?.setStage(row,this.stage);
  }
 }

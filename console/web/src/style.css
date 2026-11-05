@@ -88,3 +88,10 @@ html[lang=en] .node-name{font-size:9px}html[lang=en] .panel-head{flex-wrap:wrap}
 
 /* Only the selected input interface is shown; ownership controls are shared. */
 .control-body[data-input=xbox]{display:flex;flex-wrap:wrap;gap:12px 20px}.control-body[data-input=xbox] .control-actions{flex:0 1 240px}.control-body[data-input=xbox] .stop{width:auto;min-width:180px}.control-body[data-input=xbox] #action-state{flex-basis:100%}
+
+/* PWM calibration is separate from measured DXL joint telemetry. */
+.mouth-pwm{border-top:1px solid var(--border,#d7dce3);padding:12px 16px;font-size:12px}
+.mouth-pwm h3{margin:0;font-size:14px}.mouth-pwm p{line-height:1.5;margin:8px 0}
+.pwm-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.pwm-controls [data-slider]{flex:1 1 180px;min-width:100px;max-width:100%}
+.mouth-pwm input[type=number]{width:85px}.mouth-pwm [data-value]{font-variant-numeric:tabular-nums}

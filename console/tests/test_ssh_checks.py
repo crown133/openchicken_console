@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import os
+import shlex
 from pathlib import Path
 import sys
 import tempfile
@@ -42,7 +43,9 @@ class SshTests(unittest.IsolatedAsyncioTestCase):
             if self.mode=='wrong-password':return 255,'','Permission denied '+PASSWORD
             if self.mode=='timeout':raise asyncio.TimeoutError()
             if self.mode=='invalid-json':return 0,'not-json',''
-            return 0,json.dumps(dict(check='system',hostname='actual-radxa',user='robot',read_only=True,number=0,diagnostic=PASSWORD)),''
+            script=shlex.split(argv[-1])[2]
+            kind=next(('stage_'+stage for stage in ('N01','N02','N04','N05','N06') if script.rstrip().endswith(repr(stage)+')))')), 'initialization' if 'def collect(context,' in script else 'system')
+            return 0,json.dumps(dict(check=kind,hostname='actual-radxa',user='robot',read_only=True,number=0,diagnostic=PASSWORD)),''
         self.runner.process=fake_process
 
     async def asyncTearDown(self):
@@ -72,6 +75,35 @@ class SshTests(unittest.IsolatedAsyncioTestCase):
         restored=SshChecks(self.registry)
         self.assertEqual(restored.status(self.row['id'])['latest_job'],job['id'])
         self.assertTrue(restored.status(self.row['id'])['trusted'])
+
+    async def test_initialization_context_and_result_survive_other_checks(self):
+        await self.trust()
+        self.registry.record_management(self.row['id'], 'management_settings', {'deploy_root':'/home/robot/custom', 'config_socket':'/run/custom/configd.sock'})
+        job=self.runner.start(self.row['id'], 'initialization', PASSWORD)
+        await asyncio.gather(*list(self.runner.tasks))
+        saved=self.runner.job(job['id'])
+        self.assertEqual(saved['status'], 'completed')
+        self.assertEqual(saved['check_context']['config_socket'], '/run/custom/configd.sock')
+        self.assertEqual(saved['check_context']['deploy_root'], '/home/robot/custom')
+        self.assertNotIn(PASSWORD, json.dumps(saved))
+        script=shlex.split(self.commands[-1][-1])[2]
+        compile(script, '<remote>', 'exec')
+        await self.finish()
+        restored=SshChecks(self.registry)
+        self.assertEqual(restored.status(self.row['id'])['latest_initialization'], job['id'])
+        self.assertNotEqual(restored.status(self.row['id'])['latest_job'], job['id'])
+
+    async def test_stage_results_are_kept_separately_after_restart(self):
+        await self.trust()
+        ids = {}
+        for stage in ('N01', 'N02', 'N04', 'N05', 'N06'):
+            job = self.runner.start(self.row['id'], 'stage_'+stage, PASSWORD)
+            await asyncio.gather(*list(self.runner.tasks))
+            result = self.runner.job(job['id'])
+            self.assertEqual(result['status'], 'completed', result.get('error'))
+            ids[stage] = job['id']
+        restored = SshChecks(self.registry)
+        self.assertEqual(restored.status(self.row['id'])['latest_stages'], ids)
 
     async def test_scan_token_target_change_and_unapproved_operations(self):
         scan=await self.runner.scan(self.row['id'])

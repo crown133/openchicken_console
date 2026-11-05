@@ -10,7 +10,9 @@ import time
 import uuid
 
 import zmq
+from protocol.control_delivery import notification
 from protocol.model import JOINTS, SKILLS, MODEL_ID, joint_manifest, validate_velocity
+from protocol.pad import VERSION, DEFAULTS, LIMITS, calls as pad_calls
 
 
 class RobotSimulation:
@@ -34,6 +36,8 @@ class RobotSimulation:
         self.results = OrderedDict()
         self.q = {i: h for i, _, _, h in JOINTS}
         self.last_tick = clock()
+        self.pad_profile = dict(version=VERSION, sha256='simulation-v1', source='simulation', parameters=DEFAULTS, drive_limits=LIMITS)
+        self.pad_intent = None
         self.phase = 0.0
         self.seq = 0
 
@@ -94,6 +98,34 @@ class RobotSimulation:
         payload = request.get('payload', {})
         if not isinstance(payload, dict):
             raise ValueError('命令参数必须是对象')
+        if kind in ('pad_input', 'pad_command'):
+            pad_calls(kind, payload, self.pad_profile)  # Same validation; no native calls executed.
+            self.lease_until = now + 0.8
+            if kind == 'pad_input':
+                self.pad_intent = dict(payload)
+                allowed = self.bringup == 'Ready' and self.enabled and not self.seated and not (self.action and self.action['status'] == 'running')
+                return self.apply('drive' if allowed else 'stop', payload['velocity'], now, deadline, owner)
+            for action in payload['actions']:
+                if action in ('rest', 'shutdown'):
+                    # Simulation stops here; no OS shutdown, servo reboot or audio is simulated.
+                    self.enabled = self.torqued = False
+                    self.bringup = 'Limp'
+                    self.homing = self.action = None
+                    self.release()
+                elif action == 'home' or action == 'toggle' and self.enabled:
+                    self.enabled = False
+                    self.seated = False
+                    self.apply('init', {}, now, deadline, owner)
+                elif action == 'toggle':
+                    self.apply('enable', {}, now, deadline, owner)
+                elif action == 'init':
+                    self.apply('init', {}, now, deadline, owner)
+                elif action != 'chirp':
+                    self.apply('action', dict(skill=action, action_id=uuid.uuid4().hex), now, deadline, owner)
+            return {'accepted': True, 'source': 'simulation'}
+        return self.apply(kind, payload, now, deadline, owner)
+
+    def apply(self, kind, payload, now, deadline, owner):
         if kind == 'release':
             self.release()
         elif kind == 'heartbeat':
@@ -206,12 +238,13 @@ class RobotSimulation:
                 cr*sp*cy+sr*cp*sy, cr*cp*sy-sr*sp*cy]
         return dict(schema_version=1, robot_id=self.robot_id, boot_id=self.boot_id, seq=self.seq,
                     sample_time=now, source='simulation', enabled=self.enabled, seated=self.seated,
-                    torqued=self.torqued, bringup=self.bringup,
+                    torqued=self.torqued, bringup=self.bringup, pad_profile=self.pad_profile, pad_intent=self.pad_intent,
                     controlled=self.owner is not None, action=self.action, joints=rows,
                     imu=dict(valid=True, sample_time=now, frame='body_to_world', quat=quat, source='simulation'),
                     system=dict(voltage=7.5, external_power=True, cpu_temp=43.2,
                                 cpu_percent=8.0, memory_percent=22.5, speaker='模拟就绪', microphone='模拟就绪'),
                     model=MODEL_ID, model_verified=False,
+                    control_stream_version=1, control_notice=getattr(self, 'control_notice', None),
                     capabilities=dict(motion=True, init=True, relax=True, estop=True, source='simulation', skills=list(SKILLS)),
                     manifest=joint_manifest())
 
@@ -238,6 +271,10 @@ async def serve(context, robot_id, pub_endpoint, control_endpoint):
                 reply = dict(id=request.get('id'), ok=True, result=result)
             except (ValueError, TypeError, KeyError) as exc:
                 reply = dict(id=request.get('id') if isinstance(request, dict) else None, ok=False, error=str(exc))
+            if notification(request):
+                if not reply['ok']:
+                    robot.control_notice = dict(kind=request.get('type'), error=reply['error'], time=time.monotonic())
+                continue
             try:
                 await router.send_multipart([identity, json.dumps(reply).encode()], flags=zmq.NOBLOCK)
             except zmq.Again:

@@ -33,6 +33,38 @@ class RobotRegistry:
             self.data = json.loads(self.path.read_text())
         return {k: copy.deepcopy(self.data[k]) for k in ('revision', 'default_id', 'robots')}
 
+    def record_pad(self, robot_id, profile):
+        current = self.public()
+        row = next((r for r in current['robots'] if r['robot_id'] == robot_id), None)
+        if row and row.get('pad_mapping', {}).get('sha256') != profile['sha256']:
+            try:
+                self.change(dict(action='pad_mapping', revision=current['revision'], id=row['id'], profile=profile))
+            except Conflict:
+                pass  # Another editor won; retry on the next accepted pad command.
+
+    def record_management(self, identity, namespace, values, event=None):
+        """Merge one management namespace without replacing concurrent dossier edits."""
+        if namespace not in ('policy_management', 'program_deployment', 'management_settings', 'servo_audit'):
+            raise ValueError('Unknown management namespace')
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.with_suffix('.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self.public()
+            data = copy.deepcopy(self.data)
+            # Completion remains associated with an archived dossier after deletion.
+            row = next((r for r in data['robots'] + data['archives'] if r['id'] == identity), None)
+            if row is None:
+                raise ValueError('Robot dossier not found')
+            section = row.setdefault(namespace, {})
+            section.update(copy.deepcopy(values))
+            if event:
+                section.setdefault('history', []).append(copy.deepcopy(event))
+            row['updated_at'] = datetime.now(timezone.utc).isoformat()
+            data['revision'] += 1
+            from host.ssh_checks import private_json
+            private_json(self.path, data)
+            self.data = data
+
     def change(self, body, reserved=(), active=()):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.with_suffix('.lock').open('a') as lock:
@@ -80,10 +112,11 @@ class RobotRegistry:
                     valid = False
                 if not valid:
                     raise ValueError('Invalid CURVE public key')
-            if any(r['robot_id'] == values['robot_id'] and r is not row for r in data['robots']) or values['robot_id'] in reserved:
+            if any(r['robot_id'] == values['robot_id'] and r is not row for r in data['robots']) or (values['robot_id'] in reserved and (row is None or row['robot_id'] != values['robot_id'])):
                 raise Conflict('robot_id already exists or belongs to a loaded connection')
-            if row and row['robot_id'] in active:
-                raise Conflict('This connection is loaded. Live connection editing is not available yet.')
+            connection_fields={'robot_id','address','state_port','control_port','robot_public_key'}
+            if row and row['robot_id'] in active and any(values[k]!=row[k] for k in connection_fields):
+                raise Conflict('This connection is loaded. Its ZMQ identity, address, ports and key cannot be edited live.')
             if row is None:
                 row = dict(id=uuid.uuid4().hex, created_at=now, results={})
                 data['robots'].append(row)
@@ -101,6 +134,18 @@ class RobotRegistry:
             data['archives'].append(dict(row, deleted_at=now))
             if data['default_id'] == row['id']:
                 data['default_id'] = None
+        elif action == 'pad_mapping':
+            from protocol.pad import VERSION, parameters
+            profile = body.get('profile')
+            if row is None or not isinstance(profile, dict) or profile.get('version') != VERSION:
+                raise ValueError('Invalid pad profile')
+            parameters(profile['parameters'])
+            entry = dict(copy.deepcopy(profile), recorded_at=now,
+                         monitor_result='native_command_accepted', native_mapping_verified=False,
+                         hardware_verified=False, audio_verified=False)
+            row['pad_mapping'] = entry
+            row.setdefault('pad_history', []).append(entry)
+            row['updated_at'] = now
         elif action == 'result':
             if row is None:
                 raise ValueError('Create a dossier before recording results')
@@ -147,6 +192,11 @@ def install_registry(app, console, path):
             raise web.HTTPUnsupportedMediaType()
         try:
             body = await request.json()
+            management = request.app.get('management')
+            if management and body.get('action') in ('save', 'delete') and body.get('id') in management.checks.active:
+                raise Conflict('Wait for this robot SSH/management task to finish before editing or deleting its dossier')
+            if body.get('action') == 'pad_mapping':
+                raise ValueError('Pad mapping results are recorded by the host')
             return web.json_response(registry.change(body,
                 reserved=set(console.connections) | set(console.snapshots), active=set(console.connections)))
         except Conflict as exc:

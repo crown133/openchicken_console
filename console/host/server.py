@@ -17,8 +17,10 @@ from agent.simulator import serve
 from host.recording import Recorder
 from host.robot_registry import install_registry
 from host.ssh_checks import install_ssh_checks
+from host.policy_management import install_management
 from host.commissioning_telemetry import install_commissioning_telemetry
 from protocol.runtime import PROTOCOL as RUNTIME_PROTOCOL, validate_state as validate_runtime
+from protocol.control_delivery import notification
 from protocol.model import MODEL_ID, MODEL_DIRECTORY, joint_manifest
 from protocol.readonly import JOINT_PROTOCOL, SENSOR_PROTOCOL, POWER_PROTOCOL, FUSION_PROTOCOL, OBSERVATION_PROTOCOL, load_config, unknown_state, validate_state
 
@@ -62,7 +64,10 @@ class Connection:
         self.pub_endpoint = 'inproc://' + robot_id + '-telemetry'
         self.control_endpoint = 'inproc://' + robot_id + '-control'
         self.sub = context.socket(zmq.SUB)
-        self.dealer = None if self.readonly else context.socket(zmq.DEALER)
+        self.dealer = None if self.readonly or self.runtime else context.socket(zmq.DEALER)
+        self.context = context
+        self.control_users = set()
+        self.reply_task = None
         for sock in (s for s in (self.sub, self.dealer) if s is not None):
             sock.setsockopt(zmq.LINGER, 0)
             sock.setsockopt(zmq.RCVHWM, 8)
@@ -79,30 +84,73 @@ class Connection:
             self.sub.curve_secretkey = readonly['secret_key'].encode()
             self.sub.curve_serverkey = readonly['peer_public_key'].encode()
         self.sub.connect(self.pub_endpoint)
-        if self.runtime and self.dealer is not None:
-            self.control_endpoint = readonly['control_endpoint']
-            self.dealer.curve_publickey = readonly['public_key'].encode()
-            self.dealer.curve_secretkey = readonly['secret_key'].encode()
-            self.dealer.curve_serverkey = readonly['peer_public_key'].encode()
-            self.dealer.setsockopt(zmq.IMMEDIATE, 1)
         if self.dealer is not None:
             self.dealer.connect(self.control_endpoint)
         self.pending = {}
         self.state = unknown_state(robot_id) if readonly else None
+        if self.runtime:
+            self.state.update(protocol=RUNTIME_PROTOCOL, runtime_status='not_connected')
         self.received_at = 0.0
         self.last_seq = 0
         self.dropped = 0
         self.retired_boots = deque(maxlen=64)
 
+    def open_control(self):
+        if not self.runtime or self.readonly or self.dealer is not None:
+            return
+        self.control_endpoint = self.config['control_endpoint']
+        self.dealer = self.context.socket(zmq.DEALER)
+        for option, value in ((zmq.LINGER, 0), (zmq.RCVHWM, 8), (zmq.SNDHWM, 8),
+                              (zmq.HEARTBEAT_IVL, 1000), (zmq.HEARTBEAT_TIMEOUT, 3000), (zmq.IMMEDIATE, 1)):
+            self.dealer.setsockopt(option, value)
+        self.dealer.curve_publickey = self.config['public_key'].encode()
+        self.dealer.curve_secretkey = self.config['secret_key'].encode()
+        self.dealer.curve_serverkey = self.config['peer_public_key'].encode()
+        self.dealer.connect(self.control_endpoint)
+        self.reply_task = asyncio.create_task(self.replies())
+
+    def close_control(self):
+        if not self.runtime:
+            return
+        if self.reply_task:
+            self.reply_task.cancel()
+            self.reply_task = None
+        if self.dealer is not None:
+            self.dealer.close()
+            self.dealer = None
+
+    def control_status(self):
+        if self.readonly:
+            return 'not_configured'
+        if self.dealer is None:
+            return 'disconnected'
+        return 'connected' if self.dealer.getsockopt(zmq.EVENTS) & zmq.POLLOUT else 'connecting'
+
+    async def notify(self, message):
+        if self.readonly:
+            raise ValueError('真实监控为只读，不提供控制通道')
+        if self.runtime and self.state.get('control_stream_version') != 1:
+            raise ValueError('Update the robot agent for notification-based control')
+        self.open_control()
+        try:
+            await self.dealer.send_json(dict(message, reply=False), flags=zmq.NOBLOCK)
+        except zmq.Again as exc:
+            raise ValueError('Control transport busy; input discarded, not queued') from exc
+        return dict(sent=True)  # Local transport status, never robot acceptance.
+
     async def request(self, message):
         if self.readonly:
             raise ValueError('真实监控为只读，不提供控制通道')
+        self.open_control()
         request_id = uuid.uuid4().hex
         future = asyncio.get_running_loop().create_future()
         self.pending[request_id] = future
         try:
-            await self.dealer.send_json(dict(message, id=request_id), flags=zmq.NOBLOCK)
-            response = await asyncio.wait_for(future, 2.5 if self.runtime else 0.7)
+            try:
+                await self.dealer.send_json(dict(message, id=request_id), flags=zmq.NOBLOCK)
+            except zmq.Again as error:
+                raise ValueError('Control channel is not ready; command was not queued. Retry after reconnection.') from error
+            response = await asyncio.wait_for(future, 50 if message.get('type') == 'control_source' else 2.5 if self.runtime else 0.7)
             if not response.get('ok'):
                 raise ValueError(response.get('error', '命令被拒绝'))
             return response['result']
@@ -121,6 +169,7 @@ class Connection:
             if not future.done():
                 future.cancel()
         self.sub.close()
+        self.close_control()
         if self.dealer is not None:
             self.dealer.close()
 
@@ -181,7 +230,7 @@ class Console:
             self.connections[robot_id] = conn
             self.snapshots.pop(robot_id, None)
             self.tasks.append(asyncio.create_task(self.receive(conn)))
-            if conn.dealer is not None:
+            if conn.dealer is not None and not conn.runtime:
                 self.tasks.append(asyncio.create_task(conn.replies()))
             self.event(robot_id, '运控 IPC 连接启动' if conn.runtime else '真实只读连接启动 · 运动接口未接入')
         self.event('system', '监控主机启动')
@@ -211,6 +260,9 @@ class Console:
                 continue
             conn.dropped += max(0, state['seq'] - conn.last_seq - 1) if conn.last_seq else 0
             conn.last_seq = state['seq']
+            notice = state.get('control_notice')
+            if notice and notice != (conn.state or {}).get('control_notice'):
+                self.event(conn.robot_id, f"{notice.get('kind')}: {notice.get('error')}")
             conn.state, conn.received_at = state, time.monotonic()
             self.record('state', state)
 
@@ -221,7 +273,7 @@ class Console:
                 online = bool(conn.received_at) and time.monotonic()-conn.received_at < conn.timeout
                 if conn.runtime:
                     online = online and conn.state.get('runtime_status') == 'connected'
-                value = dict(conn.state, online=online, dropped=conn.dropped)
+                value = dict(conn.state, online=online, dropped=conn.dropped, control_channel=conn.control_status())
                 if conn.readonly:
                     # Capabilities here describe this monitor connection, not robot ownership.
                     value['capabilities'] = dict(motion=False, init=False, relax=False, estop=False, skills=[])
@@ -265,19 +317,21 @@ class Console:
                     await self.release(owner, other, leases)
         lease = leases.get(robot_id, {'token': None, 'seq': 0})
         lease['seq'] += 1
-        response = await conn.request(dict(robot_id=robot_id, boot_id=conn.state['boot_id'],
+        deliver = conn.notify if notification(message) else conn.request
+        response = await deliver(dict(robot_id=robot_id, boot_id=conn.state['boot_id'],
                                            owner=owner, token=lease['token'], seq=lease['seq'],
                                            deadline=deadline, type=kind,
                                            payload=message.get('payload', {})))
         if kind == 'claim':
             leases[robot_id] = {'token': response['token'], 'seq': 0}
-        elif kind in ('release', 'estop', 'relax'):
+        elif kind in ('release', 'estop', 'relax') or (kind == 'pad_command' and any(a in ('rest', 'shutdown') for a in message.get('payload', {}).get('actions', []))):
             leases.pop(robot_id, None)
-        if kind not in ('drive', 'heartbeat'):
+        if kind not in ('drive', 'heartbeat', 'pad_input'):
             self.event(robot_id, {'claim': '已接管模拟控制', 'release': '已释放控制', 'enable': '模拟机器人已就绪',
                                  'init': '模拟初始化：上力矩并归位，策略未使能',
                                  'relax': '模拟放松：动作已取消，关节力矩已关闭',
-                                 'estop': '模拟急停：动作已取消，使能已关闭', 'stop': '行走指令已归零', 'action': '动作请求已接受'}.get(kind, kind))
+                                 'estop': '模拟急停：动作已取消，使能已关闭', 'stop': '行走指令已归零',
+                                 'action': '动作请求已发送' if notification(message) else '动作请求已接受'}.get(kind, kind))
         if kind != 'heartbeat':
             self.record('command', dict(robot_id=robot_id, type=kind, payload=message.get('payload'), result=response))
         return response
@@ -289,22 +343,76 @@ class Console:
         if not math.isfinite(age) or not -0.1 <= age < .25:
             raise ValueError('浏览器输入已过期')
         current = self.runtime_owners.get(robot_id)
+        if kind == 'control_source':
+            if current not in (None, owner):
+                raise ValueError('请先让其他窗口释放控制')
+            mode = (message.get('payload') or {}).get('mode')
+            if mode not in ('bluetooth', 'console'):
+                raise ValueError('请选择蓝牙直连或监控端控制')
+            if conn.state.get('enabled') is not False or conn.state.get('bringup') != 'Limp':
+                raise ValueError('先固定机器人并松力，再切换控制来源')
+            self.runtime_owners.pop(robot_id, None)
+            leases.pop(robot_id, None)
+            result = await conn.request(dict(robot_id=robot_id, type=kind, payload={'mode': mode}))
+            conn.state['control_source'] = result
+            self.event(robot_id, '控制来源：'+mode)
+            return result
         if kind == 'claim':
+            if conn.state.get('control_source', {}).get('mode') != 'console':
+                raise ValueError('当前为蓝牙直连或控制来源未就绪；请先切换到监控端控制')
             if current not in (None, owner):
                 raise ValueError('其他窗口正在操控')
             self.runtime_owners[robot_id] = owner
             leases[robot_id] = {}
             return dict(accepted=True)
+        if kind == 'pwm':
+            if current not in (None, owner):
+                raise ValueError('其他窗口正在操控')
+            if not conn.state.get('capabilities', {}).get('pwm'):
+                raise ValueError('板端 PWM 标定服务未就绪')
+            payload = dict(message.get('payload', {}))
+            if payload.get('action') not in ('enable', 'update', 'disable', 'configure'):
+                raise ValueError('Invalid PWM operation')
+            remaining = .25-max(0, age)-(time.monotonic()-conn.received_at)
+            if remaining <= 0:
+                raise ValueError('PWM feedback/input expired')
+            payload['deadline'] = conn.state['sample_time']+remaining
+            result = await conn.request(dict(robot_id=robot_id, type='pwm', payload=payload))
+            if payload['action'] == 'configure':
+                if not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', robot_id):
+                    raise ValueError('Invalid robot identity for local calibration storage')
+                folder = ROOT/'config'/'pwm'/robot_id
+                folder.mkdir(parents=True, exist_ok=True)
+                destination = folder/'pwm-mouth.json'
+                temporary = destination.with_suffix('.tmp')
+                temporary.write_text(json.dumps(result['config'], indent=2)+'\n')
+                temporary.replace(destination)
+            return result
         if kind not in ('relax', 'estop') and current != owner:
             raise ValueError('请先接管控制')
         if kind == 'heartbeat':
             return dict(accepted=True)  # A UI heartbeat never refreshes robot.move.
-        result = await conn.request(dict(robot_id=robot_id, type='stop' if kind == 'release' else kind,
-                                         payload=message.get('payload', {})))
-        if kind in ('release', 'relax', 'estop'):
+        payload = dict(message.get('payload', {}))
+        if kind in ('pad_input', 'pad_command'):
+            profile = conn.state.get('pad_profile')
+            if not profile or payload.get('sha256') != profile['sha256']:
+                raise ValueError('Robot agent has no matching unified pad configuration')
+        if kind in ('pad_input', 'pad_command') or notification(message):
+            # Conservatively spend both telemetry age and browser age; never extend input lifetime.
+            remaining = .25-max(0, age)-(time.monotonic()-conn.received_at)
+            if remaining <= 0:
+                raise ValueError('Pad feedback/input expired')
+            payload['deadline'] = conn.state['sample_time']+remaining
+        release_type = 'pad_release' if conn.state.get('pad_profile') else 'stop'
+        deliver = conn.notify if notification(message) else conn.request
+        result = await deliver(dict(robot_id=robot_id, type=release_type if kind == 'release' else kind,
+                                         payload=payload))
+        if kind == 'pad_command' and getattr(self, 'registry', None):
+            self.registry.record_pad(robot_id, profile)
+        if kind in ('release', 'relax', 'estop') or (kind == 'pad_command' and any(a in ('rest', 'shutdown') for a in payload.get('actions', []))):
             self.runtime_owners.pop(robot_id, None)
             leases.pop(robot_id, None)
-        if kind != 'drive': self.event(robot_id, '运控 '+kind)
+        if kind not in ('drive', 'pad_input'): self.event(robot_id, ('已发送 ' if notification(message) else '运控 ')+kind)
         self.record('command', dict(robot_id=robot_id, type=kind, payload=message.get('payload'), result=result))
         return result
 
@@ -349,11 +457,13 @@ class Console:
         ws = web.WebSocketResponse(heartbeat=10, max_msg_size=8192)
         await ws.prepare(request)
         owner, leases = uuid.uuid4().hex, {}
+        from host.workspace_session import WorkspaceSession
+        session = WorkspaceSession(self, owner, leases, request.query.get('mode', 'monitor'))
         self.clients.add(ws)
         async def stream():
             try:
                 while not ws.closed:
-                    await asyncio.wait_for(ws.send_json(self.frame(owner)), 1)
+                    await asyncio.wait_for(ws.send_json(session.frame()), 1)
                     await asyncio.sleep(0.05)
             finally:
                 await ws.close()
@@ -368,21 +478,33 @@ class Console:
                     if not isinstance(message, dict):
                         raise ValueError('消息格式错误')
                     kind = message.get('type')
-                    if kind == 'refresh_robots':
+                    if kind == 'set_mode':
+                        payload = message.get('payload', {})
+                        if not isinstance(payload, dict):
+                            raise ValueError('Invalid mode request')
+                        result = await session.select(payload.get('mode'), message.get('robot_id'))
+                    elif kind == 'refresh_robots':
                         result = dict(robots=self.frame(owner)['robots'])
                     elif kind in ('record_start', 'record_stop'):
                         result = await self.recording_command(kind, message.get('robot_id'))
                     else:
-                        result = await self.command(owner, message, leases)
-                    await ws.send_json(dict(type='reply', id=message.get('id'), ok=True, result=result))
+                        result = await session.command(message)
+                    if not notification(message):
+                        await ws.send_json(dict(type='reply', id=message.get('id'), ok=True, result=result))
                 except (ValueError, KeyError, TypeError, asyncio.TimeoutError, zmq.ZMQError, OSError) as exc:
-                    await ws.send_json(dict(type='reply', id=message.get('id') if isinstance(message, dict) else None,
-                                            ok=False, error=str(exc) or '请求超时，结果未确认'))
+                    if notification(message):
+                        text = f"{message.get('type')}: {str(exc) or 'Control delivery failed'}"
+                        self.event(message.get('robot_id'), text)
+                        await ws.send_json(dict(type='control_notice', robot_id=message.get('robot_id'), error=text))
+                    else:
+                        await ws.send_json(dict(type='reply', id=message.get('id') if isinstance(message, dict) else None,
+                                                ok=False, error=str(exc) or '请求超时，结果未确认'))
         finally:
             sender.cancel()
             await asyncio.gather(sender, return_exceptions=True)
             for robot_id in list(leases):
                 await self.release(owner, robot_id, leases)
+            session.detach()
             self.clients.discard(ws)
             await ws.close()
         return ws
@@ -410,7 +532,8 @@ def create_app(snapshot=None, record_root=None, demos=3, readonly=None, registry
     app = web.Application(client_max_size=8192, middlewares=[local_only])
     app['console'] = console
     install_registry(app, console, registry_path or ROOT/'config'/'robots.json')
-    install_ssh_checks(app, console.registry)
+    checks = install_ssh_checks(app, console.registry)
+    install_management(app, checks)
     install_commissioning_telemetry(app, console, Connection)
     app.on_startup.append(console.start)
     app.on_cleanup.append(console.close)
@@ -434,8 +557,12 @@ def create_app(snapshot=None, record_root=None, demos=3, readonly=None, registry
         return web.FileResponse(path, headers={'Content-Disposition': f'attachment; filename="{path.name}"'})
     app.router.add_get('/', index)
     app.router.add_get('/en/', index)
-    app.router.add_get('/commissioning/', index)
-    app.router.add_get('/en/commissioning/', index)
+    async def legacy_commissioning(request):
+        query = dict(request.query, mode='commissioning')
+        from urllib.parse import urlencode
+        raise web.HTTPFound(('/en/' if request.path.startswith('/en/') else '/')+'?'+urlencode(query))
+    app.router.add_get('/commissioning/', legacy_commissioning)
+    app.router.add_get('/en/commissioning/', legacy_commissioning)
     app.router.add_get('/api/health', health)
     app.router.add_get('/api/recordings', recordings)
     app.router.add_get('/api/recordings/{id}', download)
@@ -444,11 +571,13 @@ def create_app(snapshot=None, record_root=None, demos=3, readonly=None, registry
             raise web.HTTPForbidden(text='Same-origin requests only')
         ws = web.WebSocketResponse(heartbeat=10, max_msg_size=8192)
         await ws.prepare(request)
+        from host.workspace_session import WorkspaceSession
+        observer = WorkspaceSession(console, 'commissioning-observer', {}, 'commissioning')
         console.clients.add(ws)
         async def send():
             try:
                 while not ws.closed:
-                    await asyncio.wait_for(ws.send_json(console.frame('commissioning-observer')), 1)
+                    await asyncio.wait_for(ws.send_json(observer.frame()), 1)
                     await asyncio.sleep(.05)
             finally:
                 await ws.close()

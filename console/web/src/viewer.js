@@ -8,10 +8,13 @@ export class Viewer {
     this.dirty = true;
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    const gl=this.renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
+    this.software=!!debug && /swiftshader|llvmpipe|softpipe|software/i.test(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL));
+    // Bound raster work on large/high-DPI windows, especially CPU-rendered WebGL.
+    this.pixelBudget=this.software?350000:1000000;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = !this.software;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.camera = new THREE.PerspectiveCamera(36, 1, 0.01, 20);
     this.camera.up.set(0, 0, 1);
@@ -61,6 +64,8 @@ export class Viewer {
     this.scene.add(this.jointFrame);
     this.resize = new ResizeObserver(() => {
       const { width, height } = canvas.getBoundingClientRect();
+      if(!width||!height)return;
+      this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.software?1:1.5,Math.sqrt(this.pixelBudget/(width*height))));
       this.renderer.setSize(width, height, false);
       this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
@@ -70,7 +75,7 @@ export class Viewer {
     this.lastRender = 0;
     const render = now => {
       requestAnimationFrame(render);
-      if (document.hidden || now - this.lastRender < 32) return;
+      if (document.hidden || now - this.lastRender < (this.software?67:32)) return;
       this.controls.update();
       if (!this.dirty) return;
       this.lastRender = now;

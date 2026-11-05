@@ -62,7 +62,13 @@ elif kind=='services':
                listeners=command(['ss','-ltn']),scope='Status only; no services started, stopped or enabled.')
 print(json.dumps(result,ensure_ascii=True))
 '''
-CHECKS = {'system': 'N01', 'interfaces': 'N02', 'audio': 'N04', 'services': 'N05'}
+CHECKS = {'system': 'N01', 'interfaces': 'N02', 'audio': 'N04', 'services': 'N05', 'initialization': 'SETUP', **{'stage_'+s:s for s in ('N01','N02','N04','N05','N06')}}
+
+
+def check_script(kind, context=None):
+    if kind == 'initialization' or kind.startswith('stage_'):
+        return Path(__file__).with_name('initialization_probe.py').read_text() + '\nprint(json.dumps(collect(' + repr(context) + ', ' + repr(kind[6:] if kind.startswith('stage_') else None) + ')))\n'
+    return REMOTE.replace('CHECK_KIND', repr(kind))
 
 
 def stamp():
@@ -92,6 +98,8 @@ class SshChecks:
         self.scans = {}
         self.processes = set()
         self.latest = {}
+        self.latest_initialization = {}
+        self.latest_stages = {}
         jobs = self.root/'jobs'
         if jobs.exists():
             for path in sorted(jobs.glob('*.json'), key=lambda p:p.stat().st_mtime):
@@ -100,6 +108,8 @@ class SshChecks:
                     job.update(status='interrupted', finished_at=stamp(), error='Host restarted; remote completion not confirmed. No automatic retry.')
                     private_json(path, job)
                 self.latest[job['profile_id']] = job['id']
+                if job.get('check') == 'initialization': self.latest_initialization[job['profile_id']] = job['id']
+                if job.get('check','').startswith('stage_'): self.latest_stages.setdefault(job['profile_id'],{})[job['stage']]=job['id']
 
     def profile(self, identity):
         row = next((r for r in self.registry.public()['robots'] if r['id'] == identity), None)
@@ -191,7 +201,7 @@ class SshChecks:
         trust = self.trusted(row)
         return dict(trusted=bool(trust), target=self.target(row), busy=identity in self.active,
                     fingerprints=[dict(type=k['type'],fingerprint=k['fingerprint']) for k in trust['keys']] if trust else [],
-                    latest_job=self.latest.get(identity))
+                    latest_stages=self.latest_stages.get(identity,{}), latest_job=self.latest.get(identity), latest_initialization=self.latest_initialization.get(identity))
 
     def job(self, identity):
         if not re.fullmatch(r'[0-9a-f]{32}', identity):
@@ -208,12 +218,21 @@ class SshChecks:
         if identity in self.active:raise ValueError('Another SSH task is running for this robot')
         if not isinstance(password,str) or not password or len(password)>1024 or any(c in password for c in '\r\n\x00'):
             raise ValueError('Enter a password for this check; it will not be stored')
+        context = None
+        if kind == 'initialization' or kind.startswith('stage_'):
+            from host.management_jobs import settings
+            config = settings(row)
+            context = {key: config[key] for key in ('deploy_root', 'robot_config', 'pad_config', 'robot_socket', 'config_socket')}
+            context['robot_id'] = row['robot_id']
         job = dict(id=uuid.uuid4().hex,profile_id=identity,robot_id=row['robot_id'],target=self.target(row),
                    expected_hostname=row['hostname'],check=kind,stage=CHECKS[kind],status='queued',created_at=stamp(),
-                   collector_sha256=hashlib.sha256(REMOTE.replace('CHECK_KIND',repr(kind)).encode()).hexdigest(),
+                   collector_sha256=hashlib.sha256(check_script(kind, context).encode()).hexdigest(),
+                   check_context=context,
                    read_only=True,log=['Read-only check queued. No hardware, configuration or services will be changed.'])
         private_json(self.root/'jobs'/(job['id']+'.json'), job)
         self.latest[identity]=job['id'];self.active.add(identity)
+        if kind == 'initialization': self.latest_initialization[identity] = job['id']
+        if kind.startswith('stage_'): self.latest_stages.setdefault(identity,{})[job['stage']]=job['id']
         task=asyncio.create_task(self.execute(job,trust,password))
         self.tasks.add(task);task.add_done_callback(self.tasks.discard)
         return job
@@ -245,7 +264,7 @@ class SshChecks:
                 helper.write_text('#!/bin/sh\nexec '+shlex.quote(sys.executable)+' '+shlex.quote(str(Path(__file__).with_name('ssh_askpass.py')))+' "$@"\n')
                 helper.chmod(0o700)
                 env=dict(os.environ,SSH_ASKPASS=str(helper),SSH_ASKPASS_REQUIRE='force',DISPLAY='openchicken:0',OPENCHICKEN_ASKPASS_SOCKET=str(sock),LC_ALL='C')
-                script=REMOTE.replace('CHECK_KIND',repr(job['check']))
+                script=check_script(job['check'], job.get('check_context'))
                 argv=['/usr/bin/ssh','-F','/dev/null','-T','-a','-x','-p',str(port),'-l',job['target']['user'],
                       '-o','ConnectTimeout=8','-o','ConnectionAttempts=1','-o','StrictHostKeyChecking=yes',
                       '-o','UserKnownHostsFile='+str(known),'-o','GlobalKnownHostsFile=/dev/null',
@@ -253,7 +272,7 @@ class SshChecks:
                       '-o','PreferredAuthentications=password','-o','PubkeyAuthentication=no','-o','NumberOfPasswordPrompts=1',
                       '-o','ServerAliveInterval=5','-o','ServerAliveCountMax=2',job['target']['address'],
                       'python3 -c '+shlex.quote(script)]
-                code,stdout,stderr=await self.process(argv,35,env)
+                code,stdout,stderr=await self.process(argv,90 if job['check']=='initialization' or job['check'].startswith('stage_') else 35,env)
                 # Defense in depth: never persist the authentication string, including in diagnostics.
                 stderr=stderr.replace(password,'[redacted]')
                 if code:
